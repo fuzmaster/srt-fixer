@@ -45,16 +45,25 @@ npm run preview
 
 ## Features
 
+### Processing Modes
+
+**Clean Text Only** (default)
+
+Safest mode. Keeps every original timestamp, cue count, cue order, and cue break exactly as-is. Only subtitle text is modified.
+
+**Regroup Captions** (advanced)
+
+May rebuild caption grouping and change cue timing. Use only when you want the app to redistribute words across cues. Always shows a warning before use.
+
 ### Core Features
-- Upload `.srt` file
-- Paste raw SRT text
-- Remove periods and commas
+- Upload `.srt` file or paste raw SRT text
+- Remove periods, commas, question marks, exclamation marks
 - Convert subtitle text to ALL CAPS
-- Force one line per subtitle cue
+- Force one line per subtitle cue (Clean Text Only mode)
 - Strip extra spaces
-- Preserve timestamps exactly
 - Show before/after preview
 - Download cleaned `.srt`
+- Batch process up to 50 files (Pro)
 
 ## Tech Stack
 

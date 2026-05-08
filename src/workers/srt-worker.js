@@ -11,7 +11,13 @@ function countPunctuation(text) {
 }
 
 self.onmessage = (event) => {
-  const { requestId, text, opts } = event.data || {};
+  const { requestId, text, opts, processingMode } = event.data || {};
+
+  // Defense-in-depth: enforce clean-mode restrictions inside the worker
+  // even if the component already applied them before sending.
+  const safeOpts = processingMode === "clean"
+    ? { ...opts, smartRegroup: false, grammarSplit: false, limitWordsPerLine: false }
+    : opts;
 
   const parsed = parseSRT(text);
   if (parsed.error) {
@@ -19,7 +25,7 @@ self.onmessage = (event) => {
     return;
   }
 
-  const processed = applyRules(parsed.blocks, opts);
+  const processed = applyRules(parsed.blocks, safeOpts);
   const output = formatSRT(processed);
   const origPrev = parsed.blocks
     .map((b, i) => `${i + 1}\n${b.timestamp}\n${b.text.join("\n")}`)

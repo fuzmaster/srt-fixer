@@ -146,7 +146,7 @@ export default function SRTFixer() {
       .catch(() => {});
   }, []);
 
-  const processWithWorker = useCallback((text, options) => {
+  const processWithWorker = useCallback((text, options, pMode) => {
     if (!workerRef.current) {
       setError("Processing engine is unavailable.");
       return;
@@ -154,7 +154,7 @@ export default function SRTFixer() {
     setIsProcessing(true);
     const requestId = latestReqRef.current + 1;
     latestReqRef.current = requestId;
-    workerRef.current.postMessage({ requestId, text, opts: options });
+    workerRef.current.postMessage({ requestId, text, opts: options, processingMode: pMode ?? "clean" });
   }, []);
 
   const process = useCallback((text, name, size) => {
@@ -179,9 +179,9 @@ export default function SRTFixer() {
     const source = mode === "paste" ? debouncedRaw : raw;
     if (!source || !source.trim()) return;
     const effectiveOpts = processingMode === "clean"
-      ? { ...opts, smartRegroup: false }
+      ? { ...opts, smartRegroup: false, grammarSplit: false, limitWordsPerLine: false }
       : opts;
-    processWithWorker(source, effectiveOpts);
+    processWithWorker(source, effectiveOpts, processingMode);
   }, [opts, raw, debouncedRaw, mode, processingMode, processWithWorker]);
 
   useEffect(() => {
@@ -417,7 +417,7 @@ export default function SRTFixer() {
               aria-pressed={processingMode === "clean"}
             >
               <span className="mode-btn-title">Clean Text Only</span>
-              <span className="mode-btn-desc">Preserves every original timestamp and cue</span>
+              <span className="mode-btn-desc">Keeps original timestamps and cue breaks</span>
             </button>
             <button
               className={`mode-btn ${processingMode === "regroup" ? "is-active" : ""}`}
@@ -635,7 +635,6 @@ export default function SRTFixer() {
               "Process up to 50 files in one pass",
               "Keep settings consistent across files",
               "Download all cleaned files as a ZIP",
-              "Works offline after activation",
             ].map((f) => (
               <div key={f} className="pro-marketing-item">
                 <span className="pro-marketing-dot" />{f}

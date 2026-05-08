@@ -3,6 +3,7 @@ import Chk from "./Chk";
 
 export default function AdvancedPanel({ opts, setOpts, processingMode }) {
   const [open, setOpen] = useState(false);
+  const isClean = processingMode !== "regroup";
 
   return (
     <div className="adv-wrap">
@@ -15,38 +16,41 @@ export default function AdvancedPanel({ opts, setOpts, processingMode }) {
         <span className={`adv-caret ${open ? "is-open" : ""}`}>
           ▸
         </span>
-        Advanced
+        Customize Output
       </button>
       {open && (
         <div id="adv-panel-content" className="adv-panel">
-          <label className="adv-label-group">
-            Max chars / line ({opts.maxCharsPerLine})
-            <input
-              type="range"
-              min="20"
-              max="80"
-              value={opts.maxCharsPerLine}
-              className="adv-range"
-              onChange={(e) =>
-                setOpts((o) => ({ ...o, maxCharsPerLine: Number(e.target.value), platform: "" }))
-              }
-            />
-          </label>
-          {processingMode === "regroup" && (
-            <label className="adv-label-group">
-              Min cue duration ({Number(opts.minCueSeconds).toFixed(1)}s)
-              <input
-                type="range"
-                min="0.3"
-                max="3"
-                step="0.1"
-                value={opts.minCueSeconds}
-                className="adv-range"
-                onChange={(e) =>
-                  setOpts((o) => ({ ...o, minCueSeconds: Number(e.target.value), platform: "" }))
-                }
-              />
-            </label>
+          {/* Regroup-only timing controls — hidden in Clean Text Only mode */}
+          {!isClean && (
+            <>
+              <label className="adv-label-group">
+                Max chars / line ({opts.maxCharsPerLine})
+                <input
+                  type="range"
+                  min="20"
+                  max="80"
+                  value={opts.maxCharsPerLine}
+                  className="adv-range"
+                  onChange={(e) =>
+                    setOpts((o) => ({ ...o, maxCharsPerLine: Number(e.target.value) }))
+                  }
+                />
+              </label>
+              <label className="adv-label-group">
+                Min cue duration ({Number(opts.minCueSeconds).toFixed(1)}s)
+                <input
+                  type="range"
+                  min="0.3"
+                  max="3"
+                  step="0.1"
+                  value={opts.minCueSeconds}
+                  className="adv-range"
+                  onChange={(e) =>
+                    setOpts((o) => ({ ...o, minCueSeconds: Number(e.target.value) }))
+                  }
+                />
+              </label>
+            </>
           )}
           <div className="adv-label-group">
             Punctuation detail
@@ -55,7 +59,7 @@ export default function AdvancedPanel({ opts, setOpts, processingMode }) {
               label="Periods"
               checked={opts.removePeriods}
               onChange={() =>
-                setOpts((o) => ({ ...o, removePeriods: !o.removePeriods, platform: "" }))
+                setOpts((o) => ({ ...o, removePeriods: !o.removePeriods }))
               }
             />
             <Chk
@@ -63,7 +67,7 @@ export default function AdvancedPanel({ opts, setOpts, processingMode }) {
               label="Commas"
               checked={opts.removeCommas}
               onChange={() =>
-                setOpts((o) => ({ ...o, removeCommas: !o.removeCommas, platform: "" }))
+                setOpts((o) => ({ ...o, removeCommas: !o.removeCommas }))
               }
             />
             <Chk
@@ -71,7 +75,7 @@ export default function AdvancedPanel({ opts, setOpts, processingMode }) {
               label="Question marks"
               checked={opts.removeQuestions}
               onChange={() =>
-                setOpts((o) => ({ ...o, removeQuestions: !o.removeQuestions, platform: "" }))
+                setOpts((o) => ({ ...o, removeQuestions: !o.removeQuestions }))
               }
             />
             <Chk
@@ -79,7 +83,7 @@ export default function AdvancedPanel({ opts, setOpts, processingMode }) {
               label="Exclamation marks"
               checked={opts.removeExclamations}
               onChange={() =>
-                setOpts((o) => ({ ...o, removeExclamations: !o.removeExclamations, platform: "" }))
+                setOpts((o) => ({ ...o, removeExclamations: !o.removeExclamations }))
               }
             />
           </div>
@@ -89,13 +93,13 @@ export default function AdvancedPanel({ opts, setOpts, processingMode }) {
               id="adv-sp"
               label="Strip extra spaces"
               checked={opts.stripSpaces}
-              onChange={() => setOpts((o) => ({ ...o, stripSpaces: !o.stripSpaces, platform: "" }))}
+              onChange={() => setOpts((o) => ({ ...o, stripSpaces: !o.stripSpaces }))}
             />
             <Chk
               id="adv-sl"
               label="Force single line"
               checked={opts.singleLine}
-              onChange={() => setOpts((o) => ({ ...o, singleLine: !o.singleLine, platform: "" }))}
+              onChange={() => setOpts((o) => ({ ...o, singleLine: !o.singleLine }))}
             />
           </div>
         </div>

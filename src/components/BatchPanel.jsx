@@ -226,7 +226,7 @@ export default function BatchPanel({ opts, license, onDeactivate }) {
               <div className="batch-file-right">
                 <span className="batch-file-size">{fmtSize(f.size)}</span>
                 {f.status === "done" && (
-                  <button className="batch-icon-btn" onClick={() => downloadOne(f)} title="Download cleaned file">
+                  <button className="batch-icon-btn" onClick={() => downloadOne(f)} aria-label={`Download cleaned ${f.name}`}>
                     <IDownload />
                   </button>
                 )}
