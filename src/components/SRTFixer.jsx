@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import Label from "./src/components/ui/Label";
-import ProRow from "./src/components/ui/ProRow";
-import Trust from "./src/components/ui/Trust";
-import Card from "./src/components/ui/Card";
-import FAQ from "./src/components/ui/FAQ";
-import AdvancedPanel from "./src/components/ui/AdvancedPanel";
+import Label from "./ui/Label";
+import ProRow from "./ui/ProRow";
+import Trust from "./ui/Trust";
+import Card from "./ui/Card";
+import FAQ from "./ui/FAQ";
+import AdvancedPanel from "./ui/AdvancedPanel";
 
 const SAMPLE_SRT = `1
 00:00:00,000 --> 00:00:02,500
@@ -96,7 +96,7 @@ export default function SRTFixer() {
   const tog = (k) => setOpts((o) => ({ ...o, [k]: !o[k], platform: "" }));
 
   useEffect(() => {
-    const worker = new Worker(new URL("./src/workers/srt-worker.js", import.meta.url), { type: "module" });
+    const worker = new Worker(new URL("../workers/srt-worker.js", import.meta.url), { type: "module" });
     workerRef.current = worker;
 
     worker.onmessage = (event) => {
