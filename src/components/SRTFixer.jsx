@@ -5,6 +5,9 @@ import Trust from "./ui/Trust";
 import Card from "./ui/Card";
 import FAQ from "./ui/FAQ";
 import AdvancedPanel from "./ui/AdvancedPanel";
+import LicenseGate from "./ui/LicenseGate";
+import BatchPanel from "./BatchPanel";
+import { getLicense, clearLicense, validateLicense } from "../lib/license";
 
 const SAMPLE_SRT = `1
 00:00:00,000 --> 00:00:02,500
@@ -85,6 +88,8 @@ export default function SRTFixer() {
   });
   const [sessionStats, setSessionStats] = useState({ filesProcessed: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [license, setLicense] = useState(() => getLicense());
+  const isPro = license !== null;
 
   const [parsed, setParsed] = useState(null);
   const [output, setOutput] = useState("");
@@ -128,6 +133,15 @@ export default function SRTFixer() {
       worker.terminate();
       workerRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    if (!license) return;
+    validateLicense(license.key, license.instanceId)
+      .then((valid) => {
+        if (!valid) { clearLicense(); setLicense(null); }
+      })
+      .catch(() => {});
   }, []);
 
   const processWithWorker = useCallback((text, options) => {
@@ -186,10 +200,6 @@ export default function SRTFixer() {
     if (blocks.length <= PREVIEW_MAX_BLOCKS) return origPrev;
     return blocks.slice(0, PREVIEW_MAX_BLOCKS).join("\n\n") + `\n\n[…${blocks.length - PREVIEW_MAX_BLOCKS} more]`;
   }, [origPrev]);
-
-  const showProNotice = () => {
-    window.alert("Pro features coming soon. Join the waitlist soon.");
-  };
 
   const loadSample = () => {
     process(SAMPLE_SRT, "sample.srt", SAMPLE_SRT.length);
@@ -311,16 +321,24 @@ export default function SRTFixer() {
 
           {/* Tabs */}
           <div className="tool-tabs">
-            {["upload", "paste"].map((m) => (
-              <button key={m} onClick={() => { setMode(m); reset(); }} aria-pressed={mode === m}
-                className={`tool-tab-btn ${mode === m ? "is-active" : ""} ${m === "upload" ? "has-divider" : ""}`}>
-                {m === "upload" ? "Upload .srt" : "Paste text"}
+            {[
+              { id: "upload", label: "Upload .srt" },
+              { id: "paste",  label: "Paste text" },
+              { id: "batch",  label: "Batch", pro: true },
+            ].map(({ id, label, pro }) => (
+              <button key={id} onClick={() => { setMode(id); if (id !== "batch") reset(); }} aria-pressed={mode === id}
+                className={`tool-tab-btn ${mode === id ? "is-active" : ""} ${id === "upload" || id === "paste" ? "has-divider" : ""}`}>
+                {label}{pro && <span className="tab-pro-chip">{isPro ? "Pro" : "Pro"}</span>}
               </button>
             ))}
           </div>
 
           {/* Input */}
-          {mode === "upload" ? (
+          {mode === "batch" ? (
+            isPro
+              ? <BatchPanel opts={opts} license={license} onDeactivate={() => setLicense(null)} />
+              : <LicenseGate onActivated={(lic) => setLicense(lic)} />
+          ) : mode === "upload" ? (
             <div role="button" tabIndex={0} aria-label="Upload SRT file — drag and drop or click to browse"
               onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
               onClick={() => { if (error) setError(""); fRef.current?.click(); }}
@@ -481,17 +499,21 @@ export default function SRTFixer() {
           {/* Advanced disclosure */}
           <AdvancedPanel opts={opts} setOpts={setOpts} />
 
-          {/* Pro tease */}
-          <div className="pro-tease-inline">
-            <Label><span className="pro-tease-inline-label">{I.lock} Coming in Pro</span></Label>
-            <div className="pro-tease-gap" />
-            <div onClick={showProNotice} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showProNotice(); } }} className="pro-tease-inline-grid">
-              <ProRow label="Custom word replacements" lockIcon={I.lock} />
-              <ProRow label="Profanity masking presets" lockIcon={I.lock} />
-              <ProRow label="Batch file upload" lockIcon={I.lock} />
-              <ProRow label="Saved client presets" lockIcon={I.lock} />
+          {/* Pro upsell */}
+          {!isPro && (
+            <div className="pro-tease-inline">
+              <Label><span className="pro-tease-inline-label">{I.lock} SRT Fixer Pro</span></Label>
+              <div className="pro-tease-gap" />
+              <div onClick={() => setMode("batch")} role="button" tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setMode("batch"); } }}
+                className="pro-tease-inline-grid">
+                <ProRow label="Batch multi-file processing" lockIcon={I.lock} />
+                <ProRow label="Custom word replacements" lockIcon={I.lock} />
+                <ProRow label="Profanity masking presets" lockIcon={I.lock} />
+                <ProRow label="Saved client presets" lockIcon={I.lock} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Processing indicator */}
@@ -560,7 +582,7 @@ export default function SRTFixer() {
           <div className="pro-marketing-topline" />
           <div className="pro-marketing-head-row">
             <Label>SRT Fixer Pro</Label>
-            <span className="pro-marketing-pill">Coming Soon</span>
+            <span className="pro-marketing-pill">Available Now</span>
           </div>
           <p className="pro-marketing-copy">
             Workflow tools for editors who process multiple files per week. Save time on repeated corrections across projects and clients.
