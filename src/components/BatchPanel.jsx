@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useRef } from "react";
-import { parseSRT, applyRules, formatSRT } from "../lib/srt-engine";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { deactivateLicense, clearLicense } from "../lib/license";
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+let _batchReqCounter = 0;
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -13,6 +13,27 @@ function fmtSize(bytes) {
   return bytes < 1024 * 1024
     ? `${(bytes / 1024).toFixed(1)} KB`
     : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function workerProcess(worker, text, opts) {
+  const reqId = ++_batchReqCounter;
+  return new Promise((resolve, reject) => {
+    const onMsg = ({ data }) => {
+      if (data.requestId !== reqId) return;
+      worker.removeEventListener("message", onMsg);
+      worker.removeEventListener("error", onErr);
+      if (data.error) reject(new Error(data.error));
+      else resolve(data.output);
+    };
+    const onErr = (err) => {
+      worker.removeEventListener("message", onMsg);
+      worker.removeEventListener("error", onErr);
+      reject(new Error(err.message || "Processing failed"));
+    };
+    worker.addEventListener("message", onMsg);
+    worker.addEventListener("error", onErr);
+    worker.postMessage({ requestId: reqId, text, opts });
+  });
 }
 
 const IDownload = () => (
@@ -36,17 +57,41 @@ export default function BatchPanel({ opts, license, onDeactivate }) {
   const [files, setFiles] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [rejectionMsg, setRejectionMsg] = useState("");
   const fileInputRef = useRef(null);
+  const workerRef = useRef(null);
+
+  useEffect(() => {
+    const worker = new Worker(new URL("../workers/srt-worker.js", import.meta.url), { type: "module" });
+    workerRef.current = worker;
+    return () => { worker.terminate(); workerRef.current = null; };
+  }, []);
 
   const addFiles = useCallback((fileList) => {
     const incoming = Array.from(fileList);
+    const notSrt = incoming.filter((f) => !f.name.toLowerCase().endsWith(".srt")).length;
+    const srtFiles = incoming.filter((f) => f.name.toLowerCase().endsWith(".srt"));
+    const tooLarge = srtFiles.filter((f) => f.size > MAX_FILE_SIZE).length;
+    const valid = srtFiles.filter((f) => f.size <= MAX_FILE_SIZE);
+
     setFiles((prev) => {
       const slots = MAX_FILES - prev.length;
-      if (slots <= 0) return prev;
-      const additions = incoming
-        .filter((f) => f.name.toLowerCase().endsWith(".srt") && f.size <= MAX_FILE_SIZE)
-        .slice(0, slots)
-        .map((f) => ({ id: uid(), name: f.name, size: f.size, file: f, status: "pending", output: null, error: null }));
+      const skippedCapacity = Math.max(0, valid.length - slots);
+      const additions = valid.slice(0, slots).map((f) => ({
+        id: uid(), name: f.name, size: f.size, file: f, status: "pending", output: null, error: null,
+      }));
+
+      const totalSkipped = notSrt + tooLarge + skippedCapacity;
+      if (totalSkipped > 0) {
+        const parts = [];
+        if (notSrt > 0) parts.push(`${notSrt} not .srt`);
+        if (tooLarge > 0) parts.push(`${tooLarge} over 10 MB`);
+        if (skippedCapacity > 0) parts.push(`${skippedCapacity} over ${MAX_FILES}-file limit`);
+        setRejectionMsg(`${totalSkipped} file${totalSkipped !== 1 ? "s" : ""} skipped — ${parts.join(", ")}`);
+      } else {
+        setRejectionMsg("");
+      }
+
       return [...prev, ...additions];
     });
   }, []);
@@ -56,6 +101,7 @@ export default function BatchPanel({ opts, license, onDeactivate }) {
   }, []);
 
   const processAll = useCallback(async () => {
+    if (!workerRef.current) return;
     setIsProcessing(true);
     const toProcess = files.filter((f) => f.status === "pending" || f.status === "error");
 
@@ -63,15 +109,11 @@ export default function BatchPanel({ opts, license, onDeactivate }) {
       setFiles((prev) => prev.map((f) => f.id === bf.id ? { ...f, status: "processing", error: null } : f));
       try {
         const raw = await bf.file.text();
-        const parsed = parseSRT(raw);
-        if (parsed.error) throw new Error(parsed.error);
-        const processed = applyRules(parsed.blocks, opts);
-        const output = formatSRT(processed);
+        const output = await workerProcess(workerRef.current, raw, opts);
         setFiles((prev) => prev.map((f) => f.id === bf.id ? { ...f, status: "done", output } : f));
       } catch (err) {
         setFiles((prev) => prev.map((f) => f.id === bf.id ? { ...f, status: "error", error: err.message } : f));
       }
-      await new Promise((r) => setTimeout(r, 0));
     }
     setIsProcessing(false);
   }, [files, opts]);
@@ -150,9 +192,17 @@ export default function BatchPanel({ opts, license, onDeactivate }) {
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
         >
           <input ref={fileInputRef} type="file" accept=".srt" multiple className="hidden-file-input"
-            onChange={(e) => addFiles(e.target.files)} />
+            onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
           <span className="batch-dropzone-main">Drop multiple .srt files here or click to browse</span>
           <span className="batch-dropzone-sub">Max {MAX_FILES} files · 10 MB each · Processed in your browser</span>
+        </div>
+      )}
+
+      {/* Rejection feedback */}
+      {rejectionMsg && (
+        <div className="batch-rejection-msg" role="alert">
+          <span>{rejectionMsg}</span>
+          <button className="batch-rejection-dismiss" onClick={() => setRejectionMsg("")} aria-label="Dismiss">×</button>
         </div>
       )}
 

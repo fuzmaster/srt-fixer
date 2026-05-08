@@ -195,6 +195,22 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 .app-footer-brand{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--fg2)}
 .app-footer-copy{font-size:12px;color:var(--mt);font-family:var(--mono)}
 
+/* ─── Mode Selector ─── */
+.mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.mode-btn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 14px;border-radius:var(--r);border:1.5px solid var(--bd);background:var(--sf2);cursor:pointer;text-align:left;transition:all .15s;width:100%}
+.mode-btn:hover{border-color:var(--bd-h)}
+.mode-btn.is-active{border-color:var(--ac);background:var(--ac-d)}
+.mode-btn-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--fg2);transition:color .15s}
+.mode-btn.is-active .mode-btn-title{color:var(--ac)}
+.mode-btn-desc{font-family:var(--mono);font-size:10px;color:var(--mt);line-height:1.4}
+.mode-warning{margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.22);color:#d97706;font-size:12px;font-family:var(--mono);line-height:1.55}
+.options-toggle-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+
+/* ─── Batch rejection ─── */
+.batch-rejection-msg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;border-radius:var(--r);background:rgba(248,113,113,.07);border:1px solid var(--err-b);color:var(--err);font-size:12px;font-family:var(--mono)}
+.batch-rejection-dismiss{background:none;border:none;color:var(--err);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;opacity:.7;flex-shrink:0}
+.batch-rejection-dismiss:hover{opacity:1}
+
 /* ─── Tab Pro chip ─── */
 .tab-pro-chip{font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;background:var(--ac-d);color:var(--ac);border:1px solid var(--ac-b);padding:2px 5px;border-radius:3px;margin-left:6px;font-family:var(--mono)}
 

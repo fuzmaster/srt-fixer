@@ -78,14 +78,16 @@ export default function SRTFixer() {
     // Cleanup
     removePeriods: true, removeCommas: true, removeQuestions: false, removeExclamations: false,
     allCaps: false, stripSpaces: true,
-    // Grouping
+    // Grouping (smartRegroup intentionally false — preserved by processingMode gate)
     singleLine: false, limitWordsPerLine: false,
-    smartRegroup: true, grammarSplit: true,
+    smartRegroup: false, grammarSplit: true,
     wordsPerLineMin: 4, wordsPerLineMax: 7,
     maxCharsPerLine: 37, minCueSeconds: 0.8,
     // Active platform
-    platform: "shorts",
+    platform: "",
   });
+  // "clean" = preserve every timestamp exactly; "regroup" = may change cue timing
+  const [processingMode, setProcessingMode] = useState("clean");
   const [sessionStats, setSessionStats] = useState({ filesProcessed: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
   const [license, setLicense] = useState(() => getLicense());
@@ -176,8 +178,11 @@ export default function SRTFixer() {
   useEffect(() => {
     const source = mode === "paste" ? debouncedRaw : raw;
     if (!source || !source.trim()) return;
-    processWithWorker(source, opts);
-  }, [opts, raw, debouncedRaw, mode, processWithWorker]);
+    const effectiveOpts = processingMode === "clean"
+      ? { ...opts, smartRegroup: false }
+      : opts;
+    processWithWorker(source, effectiveOpts);
+  }, [opts, raw, debouncedRaw, mode, processingMode, processWithWorker]);
 
   useEffect(() => {
     setWordsMinInput(String(opts.wordsPerLineMin));
@@ -208,7 +213,9 @@ export default function SRTFixer() {
 
   const applyPreset = (presetKey) => {
     const preset = PRESETS[presetKey];
-    if (preset) setOpts(preset.opts);
+    if (!preset) return;
+    setOpts(preset.opts);
+    setProcessingMode(preset.opts.smartRegroup ? "regroup" : "clean");
   };
 
   useEffect(() => {
@@ -402,102 +409,139 @@ export default function SRTFixer() {
         {/* Options */}
         <div className="fu d4 options-panel">
 
-          {/* Platform row */}
-          <div className="options-platform-row">
-            <div className="preset-row">
-              {Object.entries(PRESETS).map(([key, preset]) => {
-                const active = opts.platform === key;
-                return (
-                  <button key={key} onClick={() => { applyPreset(key); setOpts(o => ({ ...o, platform: key })); }}
-                    className={`preset-chip ${active ? "is-active" : ""}`}>
-                    {preset.label}
-                  </button>
-                );
-              })}
+          {/* Mode selector */}
+          <div className="mode-selector" role="group" aria-label="Processing mode">
+            <button
+              className={`mode-btn ${processingMode === "clean" ? "is-active" : ""}`}
+              onClick={() => setProcessingMode("clean")}
+              aria-pressed={processingMode === "clean"}
+            >
+              <span className="mode-btn-title">Clean Text Only</span>
+              <span className="mode-btn-desc">Preserves every original timestamp and cue</span>
+            </button>
+            <button
+              className={`mode-btn ${processingMode === "regroup" ? "is-active" : ""}`}
+              onClick={() => setProcessingMode("regroup")}
+              aria-pressed={processingMode === "regroup"}
+            >
+              <span className="mode-btn-title">Regroup Captions</span>
+              <span className="mode-btn-desc">May change cue timing — advanced</span>
+            </button>
+          </div>
+
+          {processingMode === "regroup" && (
+            <div className="mode-warning" role="note">
+              <strong>Timing may change.</strong> Regroup rebuilds caption structure. Use only when you want the app to redistribute words across cues. For exact timestamp preservation, use Clean Text Only.
             </div>
+          )}
+
+          {/* Platform presets — regroup mode only */}
+          {processingMode === "regroup" && (
+            <div className="options-platform-row">
+              <div className="preset-row">
+                {Object.entries(PRESETS).map(([key, preset]) => {
+                  const active = opts.platform === key;
+                  return (
+                    <button key={key} onClick={() => { applyPreset(key); setOpts(o => ({ ...o, platform: key })); }}
+                      className={`preset-chip ${active ? "is-active" : ""}`}>
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Text transform toggles (both modes) */}
+          <div className="options-toggle-header">
+            <div className="toggle-chip-row">
+              {[
+                { key: "removePeriods", label: "Strip Punctuation",
+                  active: opts.removePeriods || opts.removeCommas,
+                  onToggle: () => { const on = !(opts.removePeriods || opts.removeCommas); setOpts(o => ({ ...o, removePeriods: on, removeCommas: on, removeQuestions: on, removeExclamations: on, platform: "" })); } },
+                { key: "allCaps", label: "ALL CAPS", active: opts.allCaps, onToggle: () => tog("allCaps") },
+              ].map(({ key, label, active, onToggle }) => (
+                <button key={key} onClick={onToggle} aria-pressed={active}
+                  className={`toggle-chip ${active ? "is-active" : ""}`}>
+                  <span className={`toggle-chip-dot ${active ? "is-active" : ""}`} />
+                  {label}
+                </button>
+              ))}
+
+              {/* Regroup-only toggles */}
+              {processingMode === "regroup" && (
+                <>
+                  <button onClick={() => tog("smartRegroup")} aria-pressed={opts.smartRegroup}
+                    className={`toggle-chip ${opts.smartRegroup ? "is-active" : ""}`}>
+                    <span className={`toggle-chip-dot ${opts.smartRegroup ? "is-active" : ""}`} />
+                    Smart Regroup
+                  </button>
+                  <button onClick={() => tog("grammarSplit")} aria-pressed={opts.grammarSplit}
+                    className={`toggle-chip ${opts.grammarSplit ? "is-active" : ""}`}>
+                    <span className={`toggle-chip-dot ${opts.grammarSplit ? "is-active" : ""}`} />
+                    Grammar-Aware (EN)
+                  </button>
+                </>
+              )}
+            </div>
+
             <button onClick={loadSample} className="sample-btn">
               {I.zap} Try sample
             </button>
           </div>
 
-          {/* Toggle chips row */}
-          <div className="toggle-chip-row">
-            {[
-              { key: "removePeriods", also: ["removeCommas", "removeQuestions", "removeExclamations"], label: "Strip Punctuation",
-                active: opts.removePeriods || opts.removeCommas,
-                onToggle: () => { const on = !(opts.removePeriods || opts.removeCommas); setOpts(o => ({ ...o, removePeriods: on, removeCommas: on, removeQuestions: on, removeExclamations: on })); } },
-              { key: "allCaps", label: "ALL CAPS", active: opts.allCaps, onToggle: () => tog("allCaps") },
-              { key: "smartRegroup", label: "Smart Regroup", active: opts.smartRegroup, onToggle: () => tog("smartRegroup") },
-              { key: "grammarSplit", label: "Grammar-Aware (EN)", active: opts.grammarSplit, onToggle: () => tog("grammarSplit") },
-            ].map(({ key, label, active, onToggle }) => (
-              <button key={key} onClick={onToggle}
-                className={`toggle-chip ${active ? "is-active" : ""}`}>
-                <span className={`toggle-chip-dot ${active ? "is-active" : ""}`} />
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Words per caption slider */}
-          <div className="words-panel">
-            <div className="words-header">
-              <span className="words-title">Words per caption</span>
-              <span className="words-value">{opts.wordsPerLineMin}–{opts.wordsPerLineMax}</span>
+          {/* Words per caption — regroup mode only */}
+          {processingMode === "regroup" && (
+            <div className="words-panel">
+              <div className="words-header">
+                <span className="words-title">Words per caption</span>
+                <span className="words-value">{opts.wordsPerLineMin}–{opts.wordsPerLineMax}</span>
+              </div>
+              <div className="words-grid">
+                <label className="words-col-label">
+                  <span className="words-input-row">
+                    <span>Min ({opts.wordsPerLineMin})</span>
+                    <input
+                      type="number" min="1" max={opts.wordsPerLineMax} value={wordsMinInput}
+                      onChange={(e) => setWordsMinInput(e.target.value)}
+                      onBlur={() => {
+                        const parsedMin = Number.parseInt(wordsMinInput, 10);
+                        const next = Number.isFinite(parsedMin) ? parsedMin : opts.wordsPerLineMin;
+                        setOpts((o) => ({ ...o, wordsPerLineMin: Math.max(1, Math.min(next, o.wordsPerLineMax)), platform: "" }));
+                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                      className="words-number"
+                    />
+                  </span>
+                  <input type="range" min="1" max="10" value={opts.wordsPerLineMin}
+                    onChange={(e) => setOpts((o) => ({ ...o, wordsPerLineMin: Math.min(Number(e.target.value), o.wordsPerLineMax), platform: "" }))}
+                    className="words-range" />
+                </label>
+                <label className="words-col-label">
+                  <span className="words-input-row">
+                    <span>Max ({opts.wordsPerLineMax})</span>
+                    <input
+                      type="number" min={opts.wordsPerLineMin} max="15" value={wordsMaxInput}
+                      onChange={(e) => setWordsMaxInput(e.target.value)}
+                      onBlur={() => {
+                        const parsedMax = Number.parseInt(wordsMaxInput, 10);
+                        const next = Number.isFinite(parsedMax) ? parsedMax : opts.wordsPerLineMax;
+                        setOpts((o) => ({ ...o, wordsPerLineMax: Math.min(15, Math.max(next, o.wordsPerLineMin)), platform: "" }));
+                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                      className="words-number"
+                    />
+                  </span>
+                  <input type="range" min="2" max="15" value={opts.wordsPerLineMax}
+                    onChange={(e) => setOpts((o) => ({ ...o, wordsPerLineMax: Math.max(Number(e.target.value), o.wordsPerLineMin), platform: "" }))}
+                    className="words-range" />
+                </label>
+              </div>
             </div>
-            <div className="words-grid">
-              <label className="words-col-label">
-                <span className="words-input-row">
-                  <span>Min ({opts.wordsPerLineMin})</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max={opts.wordsPerLineMax}
-                    value={wordsMinInput}
-                    onChange={(e) => {
-                      setWordsMinInput(e.target.value);
-                    }}
-                    onBlur={() => {
-                      const parsedMin = Number.parseInt(wordsMinInput, 10);
-                      const next = Number.isFinite(parsedMin) ? parsedMin : opts.wordsPerLineMin;
-                      setOpts((o) => ({ ...o, wordsPerLineMin: Math.max(1, Math.min(next, o.wordsPerLineMax)), platform: "" }));
-                    }}
-                    onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                    className="words-number"
-                  />
-                </span>
-                <input type="range" min="1" max="10" value={opts.wordsPerLineMin}
-                  onChange={(e) => setOpts((o) => ({ ...o, wordsPerLineMin: Math.min(Number(e.target.value), o.wordsPerLineMax), platform: "" }))}
-                  className="words-range" />
-              </label>
-              <label className="words-col-label">
-                <span className="words-input-row">
-                  <span>Max ({opts.wordsPerLineMax})</span>
-                  <input
-                    type="number"
-                    min={opts.wordsPerLineMin}
-                    max="15"
-                    value={wordsMaxInput}
-                    onChange={(e) => {
-                      setWordsMaxInput(e.target.value);
-                    }}
-                    onBlur={() => {
-                      const parsedMax = Number.parseInt(wordsMaxInput, 10);
-                      const next = Number.isFinite(parsedMax) ? parsedMax : opts.wordsPerLineMax;
-                      setOpts((o) => ({ ...o, wordsPerLineMax: Math.min(15, Math.max(next, o.wordsPerLineMin)), platform: "" }));
-                    }}
-                    onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                    className="words-number"
-                  />
-                </span>
-                <input type="range" min="2" max="15" value={opts.wordsPerLineMax}
-                  onChange={(e) => setOpts((o) => ({ ...o, wordsPerLineMax: Math.max(Number(e.target.value), o.wordsPerLineMin), platform: "" }))}
-                  className="words-range" />
-              </label>
-            </div>
-          </div>
+          )}
 
           {/* Advanced disclosure */}
-          <AdvancedPanel opts={opts} setOpts={setOpts} />
+          <AdvancedPanel opts={opts} setOpts={setOpts} processingMode={processingMode} />
 
           {/* Pro upsell */}
           {!isPro && (
@@ -507,10 +551,9 @@ export default function SRTFixer() {
               <div onClick={() => setMode("batch")} role="button" tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setMode("batch"); } }}
                 className="pro-tease-inline-grid">
-                <ProRow label="Batch multi-file processing" lockIcon={I.lock} />
-                <ProRow label="Custom word replacements" lockIcon={I.lock} />
-                <ProRow label="Profanity masking presets" lockIcon={I.lock} />
-                <ProRow label="Saved client presets" lockIcon={I.lock} />
+                <ProRow label="Batch process up to 50 .srt files at once" lockIcon={I.lock} />
+                <ProRow label="Download all cleaned files as a ZIP" lockIcon={I.lock} />
+                <ProRow label="Consistent settings across every file" lockIcon={I.lock} />
               </div>
             </div>
           )}
@@ -585,10 +628,15 @@ export default function SRTFixer() {
             <span className="pro-marketing-pill">Available Now</span>
           </div>
           <p className="pro-marketing-copy">
-            Workflow tools for editors who process multiple files per week. Save time on repeated corrections across projects and clients.
+            Batch process up to 50 <code>.srt</code> files at once. Apply the same cleanup settings across an entire project in seconds.
           </p>
           <div className="pro-marketing-grid">
-            {["Custom word replacement rules", "Profanity masking presets", "Batch multi-file conversion", "Saved per-client presets"].map((f) => (
+            {[
+              "Process up to 50 files in one pass",
+              "Keep settings consistent across files",
+              "Download all cleaned files as a ZIP",
+              "Works offline after activation",
+            ].map((f) => (
               <div key={f} className="pro-marketing-item">
                 <span className="pro-marketing-dot" />{f}
               </div>

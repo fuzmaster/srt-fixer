@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Chk from "./Chk";
 
-export default function AdvancedPanel({ opts, setOpts }) {
+export default function AdvancedPanel({ opts, setOpts, processingMode }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -9,6 +9,8 @@ export default function AdvancedPanel({ opts, setOpts }) {
       <button
         onClick={() => setOpen(!open)}
         className="adv-toggle"
+        aria-expanded={open}
+        aria-controls="adv-panel-content"
       >
         <span className={`adv-caret ${open ? "is-open" : ""}`}>
           ▸
@@ -16,7 +18,7 @@ export default function AdvancedPanel({ opts, setOpts }) {
         Advanced
       </button>
       {open && (
-        <div className="adv-panel">
+        <div id="adv-panel-content" className="adv-panel">
           <label className="adv-label-group">
             Max chars / line ({opts.maxCharsPerLine})
             <input
@@ -30,20 +32,22 @@ export default function AdvancedPanel({ opts, setOpts }) {
               }
             />
           </label>
-          <label className="adv-label-group">
-            Min cue duration ({Number(opts.minCueSeconds).toFixed(1)}s)
-            <input
-              type="range"
-              min="0.3"
-              max="3"
-              step="0.1"
-              value={opts.minCueSeconds}
-              className="adv-range"
-              onChange={(e) =>
-                setOpts((o) => ({ ...o, minCueSeconds: Number(e.target.value), platform: "" }))
-              }
-            />
-          </label>
+          {processingMode === "regroup" && (
+            <label className="adv-label-group">
+              Min cue duration ({Number(opts.minCueSeconds).toFixed(1)}s)
+              <input
+                type="range"
+                min="0.3"
+                max="3"
+                step="0.1"
+                value={opts.minCueSeconds}
+                className="adv-range"
+                onChange={(e) =>
+                  setOpts((o) => ({ ...o, minCueSeconds: Number(e.target.value), platform: "" }))
+                }
+              />
+            </label>
+          )}
           <div className="adv-label-group">
             Punctuation detail
             <Chk
