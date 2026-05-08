@@ -301,11 +301,11 @@ export default function SRTFixer() {
           </div>
 
           <h1 className="fu d2 hero-title">
-            Fix messy SRT files<br /><span className="hero-title-accent">in seconds</span>
+            Clean messy auto-captions<br /><span className="hero-title-accent">before you burn them into reels</span>
           </h1>
 
           <p className="fu d3 hero-copy">
-            Strip punctuation, force single-line subtitles, and clean auto-captions for Reels, Shorts, and podcast clips. Built for Premiere Pro and After Effects editors.
+            Remove punctuation, fix casing, clean line breaks, and download a polished .srt file without uploading anything.
           </p>
 
           <button className="fu d4 btn-primary" onClick={() => toolRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>
@@ -313,9 +313,9 @@ export default function SRTFixer() {
           </button>
 
           <div className="fu d5 hero-trust-row">
-            <Trust icon={I.terminal} text="No AI" />
-            <Trust icon={I.shield} text="Runs in your browser" />
-            <Trust icon={I.zap} text="Free core tool" />
+            <Trust icon={I.terminal} text="No AI rewriting" />
+            <Trust icon={I.shield} text="Files stay in your browser" />
+            <Trust icon={I.zap} text="No account needed" />
           </div>
         </div>
       </header>
@@ -612,7 +612,7 @@ export default function SRTFixer() {
           <div className="features-grid">
             <Card icon={I.zap} title="Strips punctuation fast" desc="Periods, commas, question marks gone in one click. No find-and-replace chains." />
             <Card icon={I.file} title="Forces single-line captions" desc="Multi-line auto-captions collapsed to one line per cue. Clean for burn-in." />
-            <Card icon={I.clock} title="Keeps timestamps intact" desc="Only text content is modified. Your timecode stays frame-accurate." />
+            <Card icon={I.clock} title="Keeps timestamps intact" desc="In Clean Text Only mode, every original timestamp is preserved exactly. Regroup mode may rebuild timing." />
             <Card icon={I.monitor} title="Runs locally" desc="Everything processes in your browser. No uploads, no servers, no waiting." />
             <Card icon={I.shield} title="Deterministic output" desc="Same input, same output, every time. No AI rewriting, no surprises." />
           </div>
@@ -652,7 +652,7 @@ export default function SRTFixer() {
           <div className="spacer-12" />
           <div className="faq-wrap">
             <FAQ q="What does SRT Fixer do?" a="It cleans auto-generated subtitle files by removing punctuation, forcing single-line captions, converting to ALL CAPS, and stripping extra whitespace. All processing happens instantly in your browser." />
-            <FAQ q="Does it modify my timestamps?" a="No. Timestamps are preserved exactly. Only subtitle text content is modified." />
+            <FAQ q="Does it modify my timestamps?" a="In Clean Text Only mode (the default), every timestamp is preserved exactly — cue count, cue order, and timing are untouched. Only subtitle text is modified. Regroup Captions mode is an advanced option that may rebuild cue grouping and timing — it shows a clear warning before use." />
             <FAQ q="Does this use AI?" a="No. SRT Fixer applies deterministic formatting rules. Your captions are never rewritten, paraphrased, or sent to any server." />
             <FAQ q="Which NLEs does this work with?" a="Any editor that imports .srt files — Premiere Pro, After Effects, DaVinci Resolve, Final Cut Pro, CapCut, and more." />
             <FAQ q="Is my file uploaded anywhere?" a="No. Everything runs client-side in your browser. Your files never leave your machine." />
