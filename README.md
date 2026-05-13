@@ -1,7 +1,7 @@
 # SRT Fixer
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](#license)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#quick-start--installation)
+[![License](https://img.shields.io/badge/license-proprietary-lightgrey.svg)](#license)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#use-srt-fixer)
 [![Version](https://img.shields.io/badge/version-0.0.0-blue.svg)](package.json)
 
 Clean messy `.srt` subtitle files for Reels, Shorts, TikToks, and podcast clips without uploading your captions anywhere. SRT Fixer removes punctuation, fixes casing, cleans line breaks, and downloads polished subtitle files directly from your browser.
@@ -27,50 +27,28 @@ SRT Fixer is a deterministic browser utility for editors who want fast, repeatab
 - Batch process up to 50 `.srt` files and download a ZIP in Pro mode.
 - Validate, activate, and deactivate Pro licenses through a serverless API endpoint.
 
-## Quick Start / Installation
+## Use SRT Fixer
 
-### Prerequisites
+SRT Fixer is designed as a hosted browser tool. Open the app, drop in an `.srt` file or paste subtitle text, choose your cleanup settings, preview the result, and download the cleaned file.
 
-- Node.js 18+
-- npm
+### Free Cleanup Workflow
 
-### Install
+1. Open SRT Fixer in your browser.
+2. Upload a `.srt` file or paste raw subtitle text.
+3. Choose **Clean Text Only** to preserve original timestamps.
+4. Toggle punctuation, casing, spacing, and line-break cleanup options.
+5. Preview the cleaned subtitles.
+6. Download the polished `.srt` file.
 
-```bash
-git clone https://github.com/fuzmaster/srt-fixer.git
-cd srt-fixer
-npm install
-```
+### Pro Batch Workflow
 
-### Run Locally
+SRT Fixer Pro is built for editors, agencies, and content teams cleaning many subtitle files at once.
 
-```bash
-npm run dev
-```
-
-Open `http://localhost:5173` in your browser.
-
-### Test
-
-```bash
-npm test
-```
-
-### Build
-
-```bash
-npm run build
-```
-
-The production output is written to `dist/`.
-
-### Preview The Production Build
-
-```bash
-npm run preview
-```
-
-On Windows, `npm run build` and `npm test` need permission to spawn the Vite/Vitest child processes used by the toolchain.
+1. Activate a Pro license.
+2. Add up to 50 `.srt` files.
+3. Apply one cleanup preset across the full batch.
+4. Process everything locally in the browser.
+5. Download all cleaned files as a ZIP.
 
 ## Usage Example
 
@@ -111,17 +89,12 @@ For timestamp-safe cleanup, use **Clean Text Only**. For redistributed caption b
 - Vercel serverless functions
 - Lemon Squeezy license API integration
 
-## Contributing
+## Support & Pro
 
-Contributions are welcome. To propose a change:
+SRT Fixer Pro adds batch processing for high-volume subtitle cleanup workflows. It is intended for creators and teams who want consistent caption formatting across an entire project without manually processing files one by one.
 
-1. Fork the repository.
-2. Create a feature branch.
-3. Run `npm test` and `npm run build`.
-4. Open a pull request with a clear description of the change.
-
-Please keep changes focused, preserve deterministic subtitle output, and add tests for parser or processing behavior changes.
+For product support, feature requests, or Pro licensing questions, use the contact path provided with your license or product page.
 
 ## License
 
-MIT. See the repository license for details.
+All rights reserved unless a separate license file states otherwise.
