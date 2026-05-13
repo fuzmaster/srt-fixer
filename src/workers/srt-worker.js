@@ -1,4 +1,5 @@
 import { applyRules, formatSRT, parseSRT } from "../lib/srt-engine";
+import { sanitizeProcessingOptions } from "../lib/processing";
 
 function countWords(text) {
   if (!text) return 0;
@@ -15,9 +16,7 @@ self.onmessage = (event) => {
 
   // Defense-in-depth: enforce clean-mode restrictions inside the worker
   // even if the component already applied them before sending.
-  const safeOpts = processingMode === "clean"
-    ? { ...opts, smartRegroup: false, grammarSplit: false, limitWordsPerLine: false }
-    : opts;
+  const safeOpts = sanitizeProcessingOptions(opts, processingMode);
 
   const parsed = parseSRT(text);
   if (parsed.error) {

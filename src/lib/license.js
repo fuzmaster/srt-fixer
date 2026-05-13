@@ -18,13 +18,25 @@ export function clearLicense() {
 }
 
 async function callAPI(action, params) {
-  const res = await fetch("/api/license", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...params }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Request failed");
+  let res;
+  try {
+    res = await fetch("/api/license", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...params }),
+    });
+  } catch {
+    throw new Error("License service unavailable. Check your connection and try again.");
+  }
+
+  const contentType = res.headers.get("content-type") || "";
+  const data = contentType.includes("application/json")
+    ? await res.json().catch(() => ({}))
+    : {};
+
+  if (!res.ok) {
+    throw new Error(data.error || "License request failed. Please try again.");
+  }
   return data;
 }
 

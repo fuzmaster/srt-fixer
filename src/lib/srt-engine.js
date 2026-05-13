@@ -16,6 +16,9 @@ export function parseSRT(raw) {
     const [startRaw, endRaw] = timestamp.split(/\s*-->\s*/);
     const start = toSeconds(startRaw);
     const end = toSeconds(endRaw);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      continue;
+    }
     const textLines = lines
       .slice(idx + 1)
       .map((l) => l.trim())
@@ -41,6 +44,7 @@ function toSeconds(ts) {
   const h = Number(m[1]);
   const mm = Number(m[2]);
   const s = Number(m[3]);
+  if (mm > 59 || s > 59) return Number.NaN;
   const msRaw = m[4] ?? "0";
   const ms = Number(msRaw.padEnd(3, "0").slice(0, 3));
   return h * 3600 + mm * 60 + s + ms / 1000;

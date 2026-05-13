@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { deactivateLicense, clearLicense } from "../lib/license";
+import { sanitizeProcessingOptions } from "../lib/processing";
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -15,7 +16,7 @@ function fmtSize(bytes) {
     : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function workerProcess(worker, text, opts) {
+function workerProcess(worker, text, opts, processingMode) {
   const reqId = ++_batchReqCounter;
   return new Promise((resolve, reject) => {
     const onMsg = ({ data }) => {
@@ -32,7 +33,7 @@ function workerProcess(worker, text, opts) {
     };
     worker.addEventListener("message", onMsg);
     worker.addEventListener("error", onErr);
-    worker.postMessage({ requestId: reqId, text, opts });
+    worker.postMessage({ requestId: reqId, text, opts, processingMode });
   });
 }
 
@@ -53,13 +54,14 @@ const IZip = () => (
   </svg>
 );
 
-export default function BatchPanel({ opts, license, onDeactivate }) {
+export default function BatchPanel({ opts, processingMode, license, onDeactivate }) {
   const [files, setFiles] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [rejectionMsg, setRejectionMsg] = useState("");
   const fileInputRef = useRef(null);
   const workerRef = useRef(null);
+  const batchRunRef = useRef(0);
 
   useEffect(() => {
     const worker = new Worker(new URL("../workers/srt-worker.js", import.meta.url), { type: "module" });
@@ -102,21 +104,28 @@ export default function BatchPanel({ opts, license, onDeactivate }) {
 
   const processAll = useCallback(async () => {
     if (!workerRef.current) return;
+    const runId = batchRunRef.current + 1;
+    batchRunRef.current = runId;
     setIsProcessing(true);
     const toProcess = files.filter((f) => f.status === "pending" || f.status === "error");
+    const safeOpts = sanitizeProcessingOptions(opts, processingMode);
 
     for (const bf of toProcess) {
+      if (batchRunRef.current !== runId) break;
       setFiles((prev) => prev.map((f) => f.id === bf.id ? { ...f, status: "processing", error: null } : f));
       try {
         const raw = await bf.file.text();
-        const output = await workerProcess(workerRef.current, raw, opts);
+        if (batchRunRef.current !== runId) break;
+        const output = await workerProcess(workerRef.current, raw, safeOpts, processingMode);
+        if (batchRunRef.current !== runId) break;
         setFiles((prev) => prev.map((f) => f.id === bf.id ? { ...f, status: "done", output } : f));
       } catch (err) {
+        if (batchRunRef.current !== runId) break;
         setFiles((prev) => prev.map((f) => f.id === bf.id ? { ...f, status: "error", error: err.message } : f));
       }
     }
-    setIsProcessing(false);
-  }, [files, opts]);
+    if (batchRunRef.current === runId) setIsProcessing(false);
+  }, [files, opts, processingMode]);
 
   const downloadOne = useCallback((bf) => {
     if (!bf.output) return;
@@ -245,7 +254,12 @@ export default function BatchPanel({ opts, license, onDeactivate }) {
       {files.length > 0 && (
         <div className="batch-actions">
           <div className="batch-actions-left">
-            <button className="btn-ghost" onClick={() => setFiles([])} disabled={isProcessing}>Clear all</button>
+            <button
+              className="btn-ghost"
+              onClick={() => { batchRunRef.current += 1; setIsProcessing(false); setFiles([]); }}
+            >
+              Clear all
+            </button>
             {errorCount > 0 && (
               <span className="batch-error-badge">{errorCount} error{errorCount !== 1 ? "s" : ""}</span>
             )}

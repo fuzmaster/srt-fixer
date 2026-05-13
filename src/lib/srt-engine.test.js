@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseSRT, applyRules, formatSRT } from "./srt-engine.js";
+import { sanitizeProcessingOptions } from "./processing.js";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -105,6 +106,27 @@ describe("parseSRT", () => {
     const mixed = `1\n00:00:01,000 --> 00:00:03,500\nGood block\n\nnot valid\n\n2\n00:00:04,000 --> 00:00:06,000\nAnother good block`;
     const { blocks } = parseSRT(mixed);
     expect(blocks.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("rejects timestamps with seconds over 59", () => {
+    const invalid = `1\n00:00:70,000 --> 00:00:72,000\nBad seconds.`;
+    const { blocks, error } = parseSRT(invalid);
+    expect(error).toBeTruthy();
+    expect(blocks).toHaveLength(0);
+  });
+
+  it("rejects timestamps with minutes over 59", () => {
+    const invalid = `1\n00:61:00,000 --> 00:61:02,000\nBad minutes.`;
+    const { blocks, error } = parseSRT(invalid);
+    expect(error).toBeTruthy();
+    expect(blocks).toHaveLength(0);
+  });
+
+  it("rejects cues where end time is not after start time", () => {
+    const invalid = `1\n00:00:03,000 --> 00:00:02,000\nBackwards.`;
+    const { blocks, error } = parseSRT(invalid);
+    expect(error).toBeTruthy();
+    expect(blocks).toHaveLength(0);
   });
 });
 
@@ -243,6 +265,52 @@ And here is a second block.`;
     const single = `1\n00:00:01,000 --> 00:00:05,000\nHello world.`;
     const { blocks } = parseSRT(single);
     expect(() => applyRules(blocks, REGROUP_OPTS)).not.toThrow();
+  });
+});
+
+// ─── Processing mode guard ───────────────────────────────────────────────────
+
+describe("sanitizeProcessingOptions", () => {
+  it("disables regrouping options in clean mode", () => {
+    const opts = {
+      ...CLEAN_OPTS,
+      smartRegroup: true,
+      grammarSplit: true,
+      limitWordsPerLine: true,
+    };
+    const safe = sanitizeProcessingOptions(opts, "clean");
+
+    expect(safe.smartRegroup).toBe(false);
+    expect(safe.grammarSplit).toBe(false);
+    expect(safe.limitWordsPerLine).toBe(false);
+  });
+
+  it("preserves cue count and timestamps when stale regroup opts are sanitized", () => {
+    const { blocks } = parseSRT(`1
+00:00:01,000 --> 00:00:02,000
+This is the first block with several words.
+
+2
+00:00:02,000 --> 00:00:03,500
+And here is a second block.`);
+    const staleRegroupOpts = {
+      ...CLEAN_OPTS,
+      smartRegroup: true,
+      grammarSplit: true,
+      limitWordsPerLine: true,
+      wordsPerLineMin: 2,
+      wordsPerLineMax: 3,
+    };
+
+    const processed = applyRules(
+      blocks,
+      sanitizeProcessingOptions(staleRegroupOpts, "clean")
+    );
+
+    expect(processed).toHaveLength(blocks.length);
+    processed.forEach((p, i) => {
+      expect(p.timestamp).toBe(blocks[i].timestamp);
+    });
   });
 });
 

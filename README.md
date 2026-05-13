@@ -8,7 +8,7 @@ This project is built for editors who use Premiere Pro, After Effects, Riverside
 
 ### Prerequisites
 
-- Node.js 16+ 
+- Node.js 18+
 - npm
 
 ### Installation
@@ -36,6 +36,8 @@ npm run build
 ```
 
 The output will be in the `dist/` directory.
+
+On Windows, `npm run build` and `npm test` need permission to spawn the Vite/Vitest child processes used by the toolchain.
 
 ### Preview Production Build
 

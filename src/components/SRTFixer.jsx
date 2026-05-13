@@ -8,6 +8,7 @@ import AdvancedPanel from "./ui/AdvancedPanel";
 import LicenseGate from "./ui/LicenseGate";
 import BatchPanel from "./BatchPanel";
 import { getLicense, clearLicense, validateLicense } from "../lib/license";
+import { sanitizeProcessingOptions } from "../lib/processing";
 
 const SAMPLE_SRT = `1
 00:00:00,000 --> 00:00:02,500
@@ -178,9 +179,7 @@ export default function SRTFixer() {
   useEffect(() => {
     const source = mode === "paste" ? debouncedRaw : raw;
     if (!source || !source.trim()) return;
-    const effectiveOpts = processingMode === "clean"
-      ? { ...opts, smartRegroup: false, grammarSplit: false, limitWordsPerLine: false }
-      : opts;
+    const effectiveOpts = sanitizeProcessingOptions(opts, processingMode);
     processWithWorker(source, effectiveOpts, processingMode);
   }, [opts, raw, debouncedRaw, mode, processingMode, processWithWorker]);
 
@@ -343,7 +342,7 @@ export default function SRTFixer() {
           {/* Input */}
           {mode === "batch" ? (
             isPro
-              ? <BatchPanel opts={opts} license={license} onDeactivate={() => setLicense(null)} />
+              ? <BatchPanel opts={opts} processingMode={processingMode} license={license} onDeactivate={() => setLicense(null)} />
               : <LicenseGate onActivated={(lic) => setLicense(lic)} />
           ) : mode === "upload" ? (
             <div role="button" tabIndex={0} aria-label="Upload SRT file — drag and drop or click to browse"
