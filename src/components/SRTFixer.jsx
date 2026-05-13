@@ -84,6 +84,8 @@ export default function SRTFixer() {
     smartRegroup: false, grammarSplit: true,
     wordsPerLineMin: 4, wordsPerLineMax: 7,
     maxCharsPerLine: 37, minCueSeconds: 0.8,
+    // Pro timing tools
+    enableTimingTools: false, frameRate: "30", snapToFrames: false, timeOffsetMs: 0,
     // Active platform
     platform: "",
   });
@@ -179,9 +181,10 @@ export default function SRTFixer() {
   useEffect(() => {
     const source = mode === "paste" ? debouncedRaw : raw;
     if (!source || !source.trim()) return;
-    const effectiveOpts = sanitizeProcessingOptions(opts, processingMode);
+    const proSafeOpts = isPro ? opts : { ...opts, enableTimingTools: false };
+    const effectiveOpts = sanitizeProcessingOptions(proSafeOpts, processingMode);
     processWithWorker(source, effectiveOpts, processingMode);
-  }, [opts, raw, debouncedRaw, mode, processingMode, processWithWorker]);
+  }, [opts, raw, debouncedRaw, mode, processingMode, processWithWorker, isPro]);
 
   useEffect(() => {
     setWordsMinInput(String(opts.wordsPerLineMin));
@@ -540,7 +543,7 @@ export default function SRTFixer() {
           )}
 
           {/* Advanced disclosure */}
-          <AdvancedPanel opts={opts} setOpts={setOpts} processingMode={processingMode} />
+          <AdvancedPanel opts={opts} setOpts={setOpts} processingMode={processingMode} isPro={isPro} onRequirePro={() => setMode("batch")} />
 
           {/* Pro upsell */}
           {!isPro && (
@@ -552,6 +555,7 @@ export default function SRTFixer() {
                 className="pro-tease-inline-grid">
                 <ProRow label="Batch process up to 50 .srt files at once" lockIcon={I.lock} />
                 <ProRow label="Download all cleaned files as a ZIP" lockIcon={I.lock} />
+                <ProRow label="Snap subtitle timing to project framerate" lockIcon={I.lock} />
                 <ProRow label="Consistent settings across every file" lockIcon={I.lock} />
               </div>
             </div>
@@ -627,12 +631,13 @@ export default function SRTFixer() {
             <span className="pro-marketing-pill">Available Now</span>
           </div>
           <p className="pro-marketing-copy">
-            Batch process up to 50 <code>.srt</code> files at once. Apply the same cleanup settings across an entire project in seconds.
+            Batch process up to 50 <code>.srt</code> files at once, snap timing to project framerates, and apply the same cleanup settings across an entire project in seconds.
           </p>
           <div className="pro-marketing-grid">
             {[
               "Process up to 50 files in one pass",
               "Keep settings consistent across files",
+              "Snap captions to 23.976, 24, 25, 29.97, 30, 50, 59.94, or 60 fps",
               "Download all cleaned files as a ZIP",
             ].map((f) => (
               <div key={f} className="pro-marketing-item">
@@ -650,7 +655,7 @@ export default function SRTFixer() {
           <div className="spacer-12" />
           <div className="faq-wrap">
             <FAQ q="What does SRT Fixer do?" a="It cleans auto-generated subtitle files by removing punctuation, forcing single-line captions, converting to ALL CAPS, and stripping extra whitespace. All processing happens instantly in your browser." />
-            <FAQ q="Does it modify my timestamps?" a="In Clean Text Only mode (the default), every timestamp is preserved exactly — cue count, cue order, and timing are untouched. Only subtitle text is modified. Regroup Captions mode is an advanced option that may rebuild cue grouping and timing — it shows a clear warning before use." />
+            <FAQ q="Does it modify my timestamps?" a="In Clean Text Only mode (the default), every timestamp is preserved exactly — cue count, cue order, and timing are untouched. Only subtitle text is modified. Regroup Captions mode and Pro timing tools are advanced options that can intentionally adjust cue timing." />
             <FAQ q="Does this use AI?" a="No. SRT Fixer applies deterministic formatting rules. Your captions are never rewritten, paraphrased, or sent to any server." />
             <FAQ q="Which NLEs does this work with?" a="Any editor that imports .srt files — Premiere Pro, After Effects, DaVinci Resolve, Final Cut Pro, CapCut, and more." />
             <FAQ q="Is my file uploaded anywhere?" a="No. Everything runs client-side in your browser. Your files never leave your machine." />

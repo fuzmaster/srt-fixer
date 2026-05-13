@@ -34,7 +34,7 @@ export default function LicenseGate({ onActivated }) {
       <div className="license-gate-icon"><ILock /></div>
       <h3 className="license-gate-title">SRT Fixer Pro</h3>
       <p className="license-gate-copy">
-        Process multiple .srt files at once — apply the same settings across an entire project in seconds. Enter your license key to activate.
+        Process multiple .srt files at once, snap captions to project framerates, and apply the same settings across an entire project in seconds. Enter your license key to activate.
       </p>
       <div className="license-input-row">
         <input

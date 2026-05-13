@@ -228,6 +228,49 @@ describe("Clean Text Only mode (smartRegroup: false)", () => {
   });
 });
 
+// ─── Pro timing tools ────────────────────────────────────────────────────────
+
+describe("Pro timing tools", () => {
+  it("applies millisecond offsets to cue timestamps", () => {
+    const { blocks } = parseSRT(BASIC_SRT);
+    const processed = applyRules(blocks, {
+      ...CLEAN_OPTS,
+      enableTimingTools: true,
+      timeOffsetMs: 500,
+    });
+
+    expect(processed[0].timestamp).toBe("00:00:01,500 --> 00:00:04,000");
+    expect(processed[1].timestamp).toBe("00:00:04,500 --> 00:00:06,700");
+  });
+
+  it("snaps cue timestamps to the selected frame rate", () => {
+    const srt = `1\n00:00:01,020 --> 00:00:02,060\nFrame snap.`;
+    const { blocks } = parseSRT(srt);
+    const processed = applyRules(blocks, {
+      ...CLEAN_OPTS,
+      enableTimingTools: true,
+      snapToFrames: true,
+      frameRate: "24",
+    });
+
+    expect(processed[0].timestamp).toBe("00:00:01,000 --> 00:00:02,042");
+  });
+
+  it("keeps cue duration valid after negative offsets clamp to zero", () => {
+    const srt = `1\n00:00:00,100 --> 00:00:00,120\nShort cue.`;
+    const { blocks } = parseSRT(srt);
+    const processed = applyRules(blocks, {
+      ...CLEAN_OPTS,
+      enableTimingTools: true,
+      snapToFrames: true,
+      frameRate: "30",
+      timeOffsetMs: -500,
+    });
+
+    expect(processed[0].timestamp).toBe("00:00:00,000 --> 00:00:00,033");
+  });
+});
+
 // ─── Regroup mode — separate from Clean Text Only ─────────────────────────────
 
 describe("Regroup Captions mode (smartRegroup: true)", () => {

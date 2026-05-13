@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import Chk from "./Chk";
 
-export default function AdvancedPanel({ opts, setOpts, processingMode }) {
+const FRAME_RATES = ["23.976", "24", "25", "29.97", "30", "50", "59.94", "60"];
+
+export default function AdvancedPanel({ opts, setOpts, processingMode, isPro, onRequirePro }) {
   const [open, setOpen] = useState(false);
   const isClean = processingMode !== "regroup";
 
@@ -101,6 +103,71 @@ export default function AdvancedPanel({ opts, setOpts, processingMode }) {
               checked={opts.singleLine}
               onChange={() => setOpts((o) => ({ ...o, singleLine: !o.singleLine }))}
             />
+          </div>
+          <div className={`adv-pro-timing ${!isPro ? "is-locked" : ""}`}>
+            <div className="adv-pro-head">
+              <span>Pro timing</span>
+              <span className="adv-pro-pill">Pro</span>
+            </div>
+            {!isPro ? (
+              <>
+                <p className="adv-pro-copy">
+                  Snap cue timing to your project framerate and apply batch-safe subtitle offsets.
+                </p>
+                <button type="button" className="adv-pro-btn" onClick={onRequirePro}>
+                  Unlock Pro timing
+                </button>
+              </>
+            ) : (
+              <>
+                <Chk
+                  id="adv-timing"
+                  label="Enable timing tools"
+                  checked={Boolean(opts.enableTimingTools)}
+                  onChange={() =>
+                    setOpts((o) => ({ ...o, enableTimingTools: !o.enableTimingTools }))
+                  }
+                />
+                <label className="adv-label-group">
+                  Frame rate
+                  <select
+                    className="adv-select"
+                    value={opts.frameRate || "30"}
+                    disabled={!opts.enableTimingTools}
+                    onChange={(e) =>
+                      setOpts((o) => ({ ...o, frameRate: e.target.value }))
+                    }
+                  >
+                    {FRAME_RATES.map((fps) => (
+                      <option key={fps} value={fps}>{fps} fps</option>
+                    ))}
+                  </select>
+                </label>
+                <Chk
+                  id="adv-snap"
+                  label="Snap timestamps to frames"
+                  checked={Boolean(opts.snapToFrames)}
+                  onChange={() =>
+                    setOpts((o) => ({ ...o, snapToFrames: !o.snapToFrames }))
+                  }
+                />
+                <label className="adv-label-group">
+                  Offset (ms)
+                  <input
+                    type="number"
+                    min="-600000"
+                    max="600000"
+                    step="10"
+                    className="adv-number"
+                    value={opts.timeOffsetMs ?? 0}
+                    disabled={!opts.enableTimingTools}
+                    onChange={(e) =>
+                      setOpts((o) => ({ ...o, timeOffsetMs: Number(e.target.value) || 0 }))
+                    }
+                  />
+                </label>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -62,6 +62,34 @@ function toTimestamp(sec) {
   ).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
 }
 
+function frameRateToNumber(frameRate) {
+  const fps = Number(frameRate);
+  return Number.isFinite(fps) && fps > 0 && fps <= 120 ? fps : 30;
+}
+
+function applyTimingTools(block, opts) {
+  if (!opts.enableTimingTools) return block.timestamp;
+  if (!Number.isFinite(block.start) || !Number.isFinite(block.end)) {
+    return block.timestamp;
+  }
+
+  const fps = frameRateToNumber(opts.frameRate);
+  const frameDuration = 1 / fps;
+  const offsetSeconds = Number(opts.timeOffsetMs || 0) / 1000;
+  let start = block.start + offsetSeconds;
+  let end = block.end + offsetSeconds;
+
+  if (opts.snapToFrames) {
+    start = Math.round(start * fps) / fps;
+    end = Math.round(end * fps) / fps;
+  }
+
+  start = Math.max(0, start);
+  end = Math.max(end, start + (opts.snapToFrames ? frameDuration : 0.001));
+
+  return `${toTimestamp(start)} --> ${toTimestamp(end)}`;
+}
+
 const CLAUSE_STARTERS = new Set([
   "and",
   "but",
@@ -340,7 +368,7 @@ export function applyRules(blocks, opts) {
       return line;
     });
 
-    return { index: i + 1, timestamp: b.timestamp, text: lines };
+    return { index: i + 1, timestamp: applyTimingTools(b, opts), text: lines };
   });
 }
 

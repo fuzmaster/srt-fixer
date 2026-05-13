@@ -24,6 +24,8 @@ SRT Fixer is a deterministic browser utility for editors who want fast, repeatab
 - Download a cleaned `.srt` file.
 - Process files locally in the browser with a Web Worker.
 - Validate malformed SRT timestamps and invalid cue ranges.
+- Snap subtitle timestamps to project framerates in Pro mode.
+- Apply positive or negative millisecond offsets in Pro mode.
 - Batch process up to 50 `.srt` files and download a ZIP in Pro mode.
 - Validate, activate, and deactivate Pro licenses through a serverless API endpoint.
 
@@ -46,9 +48,11 @@ SRT Fixer Pro is built for editors, agencies, and content teams cleaning many su
 
 1. Activate a Pro license.
 2. Add up to 50 `.srt` files.
-3. Apply one cleanup preset across the full batch.
-4. Process everything locally in the browser.
-5. Download all cleaned files as a ZIP.
+3. Choose a cleanup preset across the full batch.
+4. Optionally snap cue timing to `23.976`, `24`, `25`, `29.97`, `30`, `50`, `59.94`, or `60` fps.
+5. Apply a subtitle offset in milliseconds when a timeline needs nudging.
+6. Process everything locally in the browser.
+7. Download all cleaned files as a ZIP.
 
 ## Usage Example
 
