@@ -23,14 +23,49 @@ function escapeHtml(value) {
 function licenseEmailHtml({ licenseKey }) {
   const safeKey = escapeHtml(licenseKey);
   return `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;max-width:560px">
-      <h1 style="font-size:24px;margin:0 0 16px">Your SRT Fixer Pro license</h1>
-      <p>Thanks for buying SRT Fixer Pro. Use this license key to activate Pro on another browser or device:</p>
-      <div style="font-family:Consolas,monospace;font-size:18px;font-weight:700;letter-spacing:1px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;padding:14px 16px;margin:20px 0">
-        ${safeKey}
+    <div style="margin:0;padding:0;background:#08080a;color:#e8e8ee;font-family:Arial,Helvetica,sans-serif">
+      <div style="max-width:640px;margin:0 auto;padding:32px 18px">
+        <div style="border:1px solid #252530;border-radius:14px;overflow:hidden;background:#141418">
+          <div style="height:3px;background:#34d399"></div>
+          <div style="padding:28px 24px 20px;background:linear-gradient(180deg,rgba(52,211,153,.08),rgba(20,20,24,0))">
+            <div style="margin-bottom:22px">
+              <span style="display:inline-block;background:#34d399;color:#000;font-family:Consolas,Monaco,monospace;font-size:11px;font-weight:800;letter-spacing:.6px;padding:4px 8px;border-radius:5px">.srt</span>
+              <span style="font-family:Consolas,Monaco,monospace;font-size:13px;font-weight:700;color:#e8e8ee;margin-left:8px">SRT Fixer Pro</span>
+            </div>
+
+            <h1 style="font-size:28px;line-height:1.15;margin:0 0 12px;color:#f4f4f5">Your Pro license is ready</h1>
+            <p style="font-size:15px;line-height:1.6;color:#a0a0b0;margin:0">
+              Thanks for buying SRT Fixer Pro. Save this key to activate batch cleanup and timing tools on another browser or device.
+            </p>
+          </div>
+
+          <div style="padding:0 24px 28px">
+            <div style="margin:4px 0 22px;padding:18px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.08);border-radius:10px">
+              <div style="font-family:Consolas,Monaco,monospace;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#34d399;margin-bottom:10px">License Key</div>
+              <div style="font-family:Consolas,Monaco,monospace;font-size:20px;line-height:1.45;font-weight:800;letter-spacing:1px;color:#e8fff6;word-break:break-all">
+                ${safeKey}
+              </div>
+            </div>
+
+            <div style="display:block;border:1px solid #252530;border-radius:10px;background:#0e0e12;padding:18px;margin-bottom:18px">
+              <div style="font-size:14px;font-weight:700;color:#f4f4f5;margin-bottom:8px">How to activate</div>
+              <ol style="margin:0;padding-left:20px;color:#a0a0b0;font-size:14px;line-height:1.7">
+                <li>Open SRT Fixer.</li>
+                <li>Choose <strong style="color:#e8e8ee">BatchPro</strong>.</li>
+                <li>Paste this license key and click <strong style="color:#e8e8ee">Activate</strong>.</li>
+              </ol>
+            </div>
+
+            <p style="font-size:13px;line-height:1.6;color:#606070;margin:0">
+              Keep this email. Your license supports up to 3 active browser/device activations. Files still process locally in your browser.
+            </p>
+          </div>
+        </div>
+
+        <p style="font-family:Consolas,Monaco,monospace;font-size:11px;line-height:1.6;color:#606070;text-align:center;margin:18px 0 0">
+          SRT Fixer · Clean subtitle files for Reels, Shorts, and podcast clips
+        </p>
       </div>
-      <p>Open SRT Fixer, choose <strong>BatchPro</strong>, paste the key, and click <strong>Activate</strong>.</p>
-      <p style="font-size:13px;color:#6b7280">Keep this email. Your license supports up to 3 active browser/device activations.</p>
     </div>
   `;
 }
