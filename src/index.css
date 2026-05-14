@@ -139,6 +139,18 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 .page-nav a{flex:0 0 auto;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--fg2);text-decoration:none;border:1px solid var(--bd);background:var(--sf);border-radius:999px;padding:9px 12px;transition:all .15s}
 .page-nav a:hover{color:var(--ac);border-color:var(--ac-b);background:var(--ac-d)}
 
+.landing-intent-section{padding-top:34px;scroll-margin-top:72px}
+.landing-intent-card{padding:28px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);display:grid;grid-template-columns:minmax(260px,.86fr) 1.14fr;gap:24px;align-items:start}
+.landing-intent-copy h2{margin-top:14px;font-size:clamp(24px,4vw,36px);line-height:1.12;color:var(--fg);max-width:520px}
+.landing-intent-copy p{margin-top:12px;font-size:14px;line-height:1.65;color:var(--fg2);max-width:520px}
+.landing-intent-cta{margin-top:20px;font-family:var(--mono);font-size:12px;font-weight:800;padding:11px 14px;border-radius:var(--r);border:1px solid var(--ac);background:var(--ac);color:#000;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.landing-intent-details{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.landing-list-card,.landing-faq-card{padding:18px;background:var(--bg-el);border:1px solid var(--bd);border-radius:var(--r)}
+.landing-faq-card{grid-column:1/-1;border-color:var(--ac-b);background:linear-gradient(180deg,var(--ac-d),var(--bg-el))}
+.landing-list-card h3,.landing-faq-card h3{font-size:14px;color:var(--fg);margin-bottom:10px}
+.landing-list-card ul,.landing-list-card ol{padding-left:18px;display:grid;gap:8px;font-size:13px;line-height:1.55;color:var(--fg2)}
+.landing-faq-card p{font-size:13px;line-height:1.6;color:var(--fg2)}
+
 .tool-main{padding-top:48px;scroll-margin-top:24px}
 .tool-label-gap{height:16px}
 
@@ -303,6 +315,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
   .workflow-head-row{grid-template-columns:1fr}
   .workflow-grid{grid-template-columns:1fr}
   .workflow-card{min-height:auto}
+  .landing-intent-card{grid-template-columns:1fr;padding:20px}
+  .landing-intent-details{grid-template-columns:1fr}
+  .landing-intent-cta{width:100%;justify-content:center}
   .guide-layout{grid-template-columns:1fr}
   .guide-nav{position:static}
   .plan-grid{grid-template-columns:1fr}

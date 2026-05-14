@@ -2,5 +2,11 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "outputDirectory": "dist",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/capcut-srt-cleaner", "destination": "/" },
+    { "source": "/remove-punctuation-from-srt", "destination": "/" },
+    { "source": "/fix-subtitle-line-breaks", "destination": "/" },
+    { "source": "/youtube-caption-cleaner", "destination": "/" }
+  ]
 }

@@ -8,14 +8,18 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "remotion:preview": "remotion preview src/remotion/index.jsx",
+    "remotion:render": "remotion render src/remotion/index.jsx SrtFixerVerticalAd out/srt-fixer-vertical-ad.mp4 --codec=h264"
   },
   "dependencies": {
+    "@remotion/cli": "^4.0.461",
     "@vercel/analytics": "^2.0.1",
     "jszip": "^3.10.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "redis": "^5.12.1"
+    "redis": "^5.12.1",
+    "remotion": "^4.0.461"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

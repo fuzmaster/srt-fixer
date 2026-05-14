@@ -9,6 +9,7 @@ import LicenseGate from "./ui/LicenseGate";
 import BatchPanel from "./BatchPanel";
 import { activateStripeSession, getLicense, clearLicense, validateLicense } from "../lib/license";
 import { sanitizeProcessingOptions } from "../lib/processing";
+import { DEFAULT_SEO, getLandingPage, pageUrl } from "../data/landingPages";
 
 const SAMPLE_SRT = `1
 00:00:00,000 --> 00:00:02,500
@@ -104,6 +105,8 @@ export default function SRTFixer() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [license, setLicense] = useState(() => getLicense());
   const isPro = license !== null;
+  const landingPage = useMemo(() => getLandingPage(window.location.pathname), []);
+  const pageSeo = landingPage || DEFAULT_SEO;
 
   const [parsed, setParsed] = useState(null);
   const [output, setOutput] = useState("");
@@ -113,6 +116,57 @@ export default function SRTFixer() {
   const [wordsMinInput, setWordsMinInput] = useState("4");
   const [wordsMaxInput, setWordsMaxInput] = useState("7");
   const tog = (k) => setOpts((o) => ({ ...o, [k]: !o[k], platform: "" }));
+
+  useEffect(() => {
+    const setMeta = (selector, value) => {
+      const el = document.head.querySelector(selector);
+      if (el) el.setAttribute("content", value);
+    };
+    const canonical = document.head.querySelector('link[rel="canonical"]');
+    const url = pageUrl(pageSeo.path);
+
+    document.title = pageSeo.metaTitle;
+    setMeta('meta[name="description"]', pageSeo.metaDescription);
+    setMeta('meta[property="og:title"]', pageSeo.metaTitle);
+    setMeta('meta[property="og:description"]', pageSeo.metaDescription);
+    setMeta('meta[property="og:url"]', url);
+    setMeta('meta[name="twitter:title"]', pageSeo.metaTitle);
+    setMeta('meta[name="twitter:description"]', pageSeo.metaDescription);
+    if (canonical) canonical.setAttribute("href", url);
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          name: "SRT Fixer",
+          applicationCategory: "MultimediaApplication",
+          operatingSystem: "Web",
+          url,
+          description: pageSeo.metaDescription,
+          offers: {
+            "@type": "Offer",
+            price: "9.99",
+            priceCurrency: "USD",
+          },
+        },
+        {
+          "@type": "WebPage",
+          name: pageSeo.metaTitle,
+          url,
+          description: pageSeo.metaDescription,
+        },
+      ],
+    };
+    let script = document.getElementById("srt-fixer-schema");
+    if (!script) {
+      script = document.createElement("script");
+      script.id = "srt-fixer-schema";
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(schema);
+  }, [pageSeo]);
 
   useEffect(() => {
     const worker = new Worker(new URL("../workers/srt-worker.js", import.meta.url), { type: "module" });
@@ -362,11 +416,11 @@ export default function SRTFixer() {
           </div>
 
           <h1 className="fu d2 hero-title">
-            Clean and fix .SRT subtitle files<br /><span className="hero-title-accent">before you burn them into reels</span>
+            {pageSeo.heroLead}<br /><span className="hero-title-accent">{pageSeo.heroAccent}</span>
           </h1>
 
           <p className="fu d3 hero-copy">
-            Remove punctuation, fix casing, clean line breaks, and download a polished .srt file. This formats existing subtitles, it does not transcribe audio or video.
+            {pageSeo.heroCopy}
           </p>
 
           <button className="fu d4 btn-primary" onClick={() => toolRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>
@@ -406,11 +460,45 @@ export default function SRTFixer() {
 
       <nav className="page-nav app-container" aria-label="Page sections">
         <a href="#tool">Tool</a>
+        {landingPage && <a href="#intent">{landingPage.navLabel}</a>}
         <a href="#workflows">Workflows</a>
         <a href="#export-guides">Export Guides</a>
         <a href="#free-vs-pro">Free vs Pro</a>
         <a href="#faq">FAQ</a>
       </nav>
+
+      {landingPage && (
+        <section className="app-container landing-intent-section" id="intent">
+          <div className="landing-intent-card fu d4">
+            <div className="landing-intent-copy">
+              <Label>{landingPage.navLabel}</Label>
+              <h2>{landingPage.intentTitle}</h2>
+              <p>{landingPage.intentCopy}</p>
+              <button className="landing-intent-cta" onClick={() => toolRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                Clean an SRT now {I.arrow}
+              </button>
+            </div>
+            <div className="landing-intent-details">
+              <div className="landing-list-card">
+                <h3>What this fixes</h3>
+                <ul>
+                  {landingPage.bullets.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div className="landing-list-card">
+                <h3>How to use it</h3>
+                <ol>
+                  {landingPage.steps.map((item) => <li key={item}>{item}</li>)}
+                </ol>
+              </div>
+              <div className="landing-faq-card">
+                <h3>{landingPage.faq.q}</h3>
+                <p>{landingPage.faq.a}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══════ TOOL ═══════ */}
       <main ref={toolRef} id="tool" className="app-container tool-main">
