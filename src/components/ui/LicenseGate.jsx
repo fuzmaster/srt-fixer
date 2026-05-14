@@ -34,40 +34,51 @@ export default function LicenseGate({ onActivated }) {
 
   return (
     <div className="license-gate">
-      <div className="license-gate-icon"><ILock /></div>
-      <h3 className="license-gate-title">SRT Fixer Pro</h3>
-      <p className="license-gate-copy">
-        Process multiple .srt files at once, snap captions to project framerates, and apply the same settings across an entire project in seconds. Buy Pro or enter an existing license key.
-      </p>
-      <div className="license-input-row">
-        <input
-          type="text"
-          className={`license-input ${status === "error" ? "is-error" : ""}`}
-          placeholder="SRT-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
-          value={key}
-          onChange={(e) => { setKey(e.target.value); if (status === "error") setStatus("idle"); }}
-          onKeyDown={(e) => { if (e.key === "Enter") handleActivate(); }}
-          disabled={status === "loading"}
-          spellCheck={false}
-          autoComplete="off"
-        />
-        <button
-          className="btn-primary"
-          onClick={handleActivate}
-          disabled={status === "loading" || !key.trim()}
-        >
-          {status === "loading" ? "Activating..." : "Activate"}
-        </button>
+      <div className="license-gate-head">
+        <div className="license-gate-icon"><ILock /></div>
+        <div>
+          <div className="license-gate-kicker">BatchPro</div>
+          <h3 className="license-gate-title">Unlock SRT Fixer Pro</h3>
+        </div>
       </div>
-      {status === "error" && (
-        <p className="license-error-msg">{errorMsg}</p>
-      )}
-      <div className="license-gate-footer">
+
+      <p className="license-gate-copy">
+        Batch process up to 50 .srt files, download a ZIP, and use timing tools for project framerates.
+      </p>
+
+      <div className="license-gate-actions">
         <a href={CHECKOUT_URL} className="license-buy-link" target="_blank" rel="noopener noreferrer">
           Buy Pro — $9.99 one-time
         </a>
-        <span className="license-gate-divider">·</span>
-        <span className="license-gate-note">Return after checkout to unlock Pro in this browser.</span>
+        <span className="license-gate-note">Stripe checkout returns here and creates your license key.</span>
+      </div>
+
+      <div className="license-activate-panel">
+        <label className="license-input-label" htmlFor="pro-license-key">Already bought Pro?</label>
+        <div className="license-input-row">
+          <input
+            id="pro-license-key"
+            type="text"
+            className={`license-input ${status === "error" ? "is-error" : ""}`}
+            placeholder="SRT-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+            value={key}
+            onChange={(e) => { setKey(e.target.value); if (status === "error") setStatus("idle"); }}
+            onKeyDown={(e) => { if (e.key === "Enter") handleActivate(); }}
+            disabled={status === "loading"}
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button
+            className="license-activate-btn"
+            onClick={handleActivate}
+            disabled={status === "loading" || !key.trim()}
+          >
+            {status === "loading" ? "Activating..." : "Activate"}
+          </button>
+        </div>
+        {status === "error" && (
+          <p className="license-error-msg">{errorMsg}</p>
+        )}
       </div>
     </div>
   );
