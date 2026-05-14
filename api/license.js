@@ -4,6 +4,7 @@ import {
   deactivateStoredLicense,
   validateStoredLicense,
 } from "./_license-store.js";
+import { sendLicenseEmail } from "./_license-email.js";
 
 const ALLOWED_ACTIONS = new Set([
   "activate",
@@ -145,6 +146,11 @@ export default async function handler(req, res) {
         session: result.session,
         lineItems: result.lineItems,
       });
+      await sendLicenseEmail({
+        to: license.record.customerEmail,
+        licenseKey: license.licenseKey,
+        record: license.record,
+      }).catch((err) => console.error("License email failed", err));
       const activation = await activateStoredLicense(license.licenseKey, "browser");
       return res.status(200).json({
         valid: true,

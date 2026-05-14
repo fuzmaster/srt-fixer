@@ -81,6 +81,12 @@ export async function setJson(key, value) {
 }
 
 export async function createLicenseFromStripeSession({ session, lineItems, licenseKey }) {
+  const sessionIndex = await getJson(`stripe-session:${session.id}`);
+  if (sessionIndex?.licenseKey && sessionIndex?.licenseHash) {
+    const existing = await getJson(`license:${sessionIndex.licenseHash}`);
+    if (existing) return { licenseKey: sessionIndex.licenseKey, record: existing };
+  }
+
   const key = normalizeLicenseKey(licenseKey || generateLicenseKey());
   const hash = hashLicenseKey(key);
   const existing = await getJson(`license:${hash}`);
@@ -119,6 +125,22 @@ export async function createLicenseFromStripeSession({ session, lineItems, licen
   if (latestCharge) await setJson(`stripe-charge:${latestCharge}`, { licenseHash: hash });
 
   return { licenseKey: key, record };
+}
+
+export async function markLicenseEmailSent(licenseKey, emailId = null) {
+  const hash = hashLicenseKey(licenseKey);
+  const key = `license:${hash}`;
+  const record = await getJson(key);
+  if (!record) return null;
+
+  const nextRecord = {
+    ...record,
+    licenseEmailSentAt: new Date().toISOString(),
+    licenseEmailId: emailId,
+    updatedAt: new Date().toISOString(),
+  };
+  await setJson(key, nextRecord);
+  return nextRecord;
 }
 
 export async function activateStoredLicense(licenseKey, instanceName = "browser") {

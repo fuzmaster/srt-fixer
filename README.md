@@ -93,6 +93,7 @@ For timestamp-safe cleanup, use **Clean Text Only**. For redistributed caption b
 - Vercel serverless functions
 - Stripe Checkout and webhook integration
 - Redis-backed Pro license storage
+- Resend transactional license emails
 
 ## Support & Pro
 
@@ -117,8 +118,11 @@ SRT Fixer Pro is built around Stripe Checkout and Payment Links.
 10. Optional but recommended: set `STRIPE_PRO_PRODUCT_ID` and `STRIPE_PRO_PRICE_ID` so the backend only unlocks Pro for this exact product.
 11. Create a Vercel Redis, Vercel KV, or Upstash Redis database. Set either `REDIS_URL` or the REST pair `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
 12. Set `LICENSE_HASH_SECRET` to a long random string.
+13. Create a Resend API key and set `RESEND_API_KEY`.
+14. Set `LICENSE_EMAIL_FROM` to a verified sender, such as `SRT Fixer <licenses@yourdomain.com>`.
+15. Optional: set `LICENSE_EMAIL_REPLY_TO` for support replies.
 
-After checkout, the backend generates an `SRT-...` license key, stores a hashed license record, and returns the key to the customer. Customers can reuse that key on another browser or device. Refund webhooks mark matching licenses inactive.
+After checkout, the backend generates an `SRT-...` license key, stores a hashed license record, emails the key to the Stripe customer email through Resend, and returns the key to the customer in the browser. Customers can reuse that key on another browser or device. Refund webhooks mark matching licenses inactive.
 
 ## License
 

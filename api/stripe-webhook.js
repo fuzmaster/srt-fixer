@@ -1,5 +1,9 @@
 import crypto from "node:crypto";
-import { markLicenseRefundedByPaymentIntent } from "./_license-store.js";
+import {
+  createLicenseFromStripeSession,
+  markLicenseRefundedByPaymentIntent,
+} from "./_license-store.js";
+import { sendLicenseEmail } from "./_license-email.js";
 
 const HANDLED_EVENTS = new Set([
   "checkout.session.completed",
@@ -46,6 +50,60 @@ function verifyStripeSignature(rawBody, signatureHeader, secret) {
   return crypto.timingSafeEqual(expected, received);
 }
 
+async function stripeRequest(path, params = {}) {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const qs = new URLSearchParams(params);
+  const url = `https://api.stripe.com/v1/${path}${qs.size ? `?${qs}` : ""}`;
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.error?.message || "Stripe request failed");
+  }
+  return data;
+}
+
+async function stripeSessionLineItems(sessionId) {
+  return stripeRequest(`checkout/sessions/${encodeURIComponent(sessionId)}/line_items`, {
+    limit: "10",
+  });
+}
+
+function lineItemsMatchProduct(lineItems) {
+  const expectedPriceId = process.env.STRIPE_PRO_PRICE_ID;
+  const expectedProductId = process.env.STRIPE_PRO_PRODUCT_ID;
+  if (!expectedPriceId && !expectedProductId) return true;
+
+  return lineItems.data?.some((item) => {
+    const price = item.price || {};
+    return (
+      (expectedPriceId && price.id === expectedPriceId) ||
+      (expectedProductId && price.product === expectedProductId)
+    );
+  });
+}
+
+async function handleCheckoutCompleted(session) {
+  if (session.payment_status !== "paid") return;
+
+  const lineItems = await stripeSessionLineItems(session.id);
+  if (!lineItemsMatchProduct(lineItems)) return;
+
+  const license = await createLicenseFromStripeSession({ session, lineItems });
+  await sendLicenseEmail({
+    to: license.record.customerEmail,
+    licenseKey: license.licenseKey,
+    record: license.record,
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -73,6 +131,10 @@ export default async function handler(req, res) {
 
   if (!HANDLED_EVENTS.has(event.type)) {
     return res.status(200).json({ ok: true, ignored: true });
+  }
+
+  if (event.type === "checkout.session.completed") {
+    await handleCheckoutCompleted(event.data?.object || {});
   }
 
   if (event.type === "charge.refunded") {
