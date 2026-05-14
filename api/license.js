@@ -1,3 +1,10 @@
+import {
+  activateStoredLicense,
+  createLicenseFromStripeSession,
+  deactivateStoredLicense,
+  validateStoredLicense,
+} from "./_license-store.js";
+
 const ALLOWED_ACTIONS = new Set([
   "activate",
   "validate",
@@ -5,11 +12,8 @@ const ALLOWED_ACTIONS = new Set([
   "activate_stripe_session",
   "validate_stripe_session",
 ]);
-const MAX_KEY_LENGTH = 128;
-const MAX_INSTANCE_FIELD_LENGTH = 128;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX = 20;
-const UPSTREAM_TIMEOUT_MS = 8000;
 const requestBuckets = new Map();
 
 function clientIp(req) {
@@ -44,14 +48,6 @@ function originAllowed(req) {
   } catch {
     return false;
   }
-}
-
-function appendOptionalParam(params, key, value) {
-  if (value === undefined || value === null || value === "") return true;
-  const str = String(value).trim();
-  if (!str || str.length > MAX_INSTANCE_FIELD_LENGTH) return false;
-  params.append(key, str);
-  return true;
 }
 
 async function stripeRequest(path, params = {}) {
@@ -112,11 +108,7 @@ async function verifyStripeSession(sessionId) {
     if (!matched) return { valid: false, error: "Payment is not for SRT Fixer Pro" };
   }
 
-  return {
-    valid: true,
-    session,
-    customerEmail: session.customer_details?.email || session.customer_email || null,
-  };
+  return { valid: true, session, lineItems: await stripeSessionLineItems(sessionId) };
 }
 
 export default async function handler(req, res) {
@@ -146,58 +138,44 @@ export default async function handler(req, res) {
       if (!result.valid) {
         return res.status(400).json({ valid: false, activated: false, error: result.error });
       }
+      if (action === "validate_stripe_session") {
+        return res.status(200).json({ valid: true });
+      }
+      const license = await createLicenseFromStripeSession({
+        session: result.session,
+        lineItems: result.lineItems,
+      });
+      const activation = await activateStoredLicense(license.licenseKey, "browser");
       return res.status(200).json({
         valid: true,
-        activated: action === "activate_stripe_session",
-        customerEmail: result.customerEmail,
+        activated: true,
+        licenseKey: license.licenseKey,
+        instance: activation.instance,
+        customerEmail: license.record.customerEmail,
       });
     } catch (err) {
-      return res.status(502).json({ error: err.message || "Stripe verification failed" });
+      return res.status(502).json({ error: err.message || "Stripe/license verification failed" });
     }
   }
 
   if (!license_key || typeof license_key !== "string") {
     return res.status(400).json({ error: "license_key required" });
   }
-  const trimmedKey = license_key.trim();
-  if (!trimmedKey || trimmedKey.length > MAX_KEY_LENGTH) {
-    return res.status(400).json({ error: "Invalid license key" });
-  }
-
-  const params = new URLSearchParams({ license_key: trimmedKey });
-  if (!appendOptionalParam(params, "instance_id", instance_id)) {
-    return res.status(400).json({ error: "Invalid instance_id" });
-  }
-  if (!appendOptionalParam(params, "instance_name", instance_name)) {
-    return res.status(400).json({ error: "Invalid instance_name" });
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
   try {
-    const upstream = await fetch(
-      `https://api.lemonsqueezy.com/v1/licenses/${action}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
-        signal: controller.signal,
-      }
-    );
-    const contentType = upstream.headers.get("content-type") || "";
-    const data = contentType.includes("application/json")
-      ? await upstream.json().catch(() => ({}))
-      : {};
-    const status = upstream.status >= 400 && upstream.status < 500 ? upstream.status : 502;
-    return res.status(upstream.ok ? upstream.status : status).json(
-      Object.keys(data).length ? data : { error: "License service unavailable. Try again." }
-    );
-  } catch (err) {
-    if (err?.name === "AbortError") {
-      return res.status(504).json({ error: "License service timed out. Try again." });
+    if (action === "activate") {
+      const result = await activateStoredLicense(license_key, instance_name);
+      return res.status(result.activated ? 200 : 400).json(result);
     }
-    return res.status(502).json({ error: "License service unavailable. Try again." });
-  } finally {
-    clearTimeout(timeout);
+    if (action === "validate") {
+      const result = await validateStoredLicense(license_key, instance_id);
+      return res.status(200).json(result);
+    }
+    if (action === "deactivate") {
+      const result = await deactivateStoredLicense(license_key, instance_id);
+      return res.status(200).json(result);
+    }
+    return res.status(400).json({ error: "Invalid action" });
+  } catch (err) {
+    return res.status(502).json({ error: err.message || "License service unavailable. Try again." });
   }
 }

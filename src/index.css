@@ -131,6 +131,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 
 .error-alert{margin-top:14px;padding:12px 16px;border-radius:var(--r);background:var(--err-d);border:1px solid var(--err-b);color:var(--err);font-size:13px;font-family:var(--mono);display:flex;align-items:center;gap:8px}
 .error-alert-icon{flex-shrink:0}
+.success-alert{margin-top:14px;padding:12px 16px;border-radius:var(--r);background:var(--ac-d);border:1px solid var(--ac-b);color:var(--ac);font-size:13px;font-family:var(--mono);line-height:1.5;word-break:break-word}
 
 .options-panel{margin-top:28px;padding:22px 24px;background:var(--sf);border-radius:var(--rl);border:1px solid var(--bd)}
 .mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}

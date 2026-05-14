@@ -91,7 +91,8 @@ For timestamp-safe cleanup, use **Clean Text Only**. For redistributed caption b
 - Vitest
 - JSZip
 - Vercel serverless functions
-- Lemon Squeezy license API integration
+- Stripe Checkout and webhook integration
+- Redis-backed Pro license storage
 
 ## Support & Pro
 
@@ -114,8 +115,10 @@ SRT Fixer Pro is built around Stripe Checkout and Payment Links.
 8. Subscribe the webhook to `checkout.session.completed` and `charge.refunded`.
 9. Set `STRIPE_WEBHOOK_SECRET` in Vercel.
 10. Optional but recommended: set `STRIPE_PRO_PRODUCT_ID` and `STRIPE_PRO_PRICE_ID` so the backend only unlocks Pro for this exact product.
+11. Create a Vercel Redis, Vercel KV, or Upstash Redis database. Set either `REDIS_URL` or the REST pair `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
+12. Set `LICENSE_HASH_SECRET` to a long random string.
 
-The app stores the verified Stripe Checkout Session locally in the browser. For account-based entitlements, license transfers, or an admin dashboard, add durable storage behind the Stripe webhook endpoint.
+After checkout, the backend generates an `SRT-...` license key, stores a hashed license record, and returns the key to the customer. Customers can reuse that key on another browser or device. Refund webhooks mark matching licenses inactive.
 
 ## License
 

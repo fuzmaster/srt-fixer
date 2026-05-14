@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { activateLicense } from "../../lib/license";
 
 const ILock = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -12,14 +13,55 @@ const CHECKOUT_URL =
   import.meta.env.VITE_LS_CHECKOUT_URL ||
   "#";
 
-export default function LicenseGate() {
+export default function LicenseGate({ onActivated }) {
+  const [key, setKey] = useState("");
+  const [status, setStatus] = useState("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleActivate = async () => {
+    const trimmed = key.trim();
+    if (!trimmed) return;
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      const license = await activateLicense(trimmed);
+      onActivated(license);
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err.message || "Activation failed. Check your key and try again.");
+    }
+  };
+
   return (
     <div className="license-gate">
       <div className="license-gate-icon"><ILock /></div>
       <h3 className="license-gate-title">SRT Fixer Pro</h3>
       <p className="license-gate-copy">
-        Process multiple .srt files at once, snap captions to project framerates, and apply the same settings across an entire project in seconds.
+        Process multiple .srt files at once, snap captions to project framerates, and apply the same settings across an entire project in seconds. Buy Pro or enter an existing license key.
       </p>
+      <div className="license-input-row">
+        <input
+          type="text"
+          className={`license-input ${status === "error" ? "is-error" : ""}`}
+          placeholder="SRT-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+          value={key}
+          onChange={(e) => { setKey(e.target.value); if (status === "error") setStatus("idle"); }}
+          onKeyDown={(e) => { if (e.key === "Enter") handleActivate(); }}
+          disabled={status === "loading"}
+          spellCheck={false}
+          autoComplete="off"
+        />
+        <button
+          className="btn-primary"
+          onClick={handleActivate}
+          disabled={status === "loading" || !key.trim()}
+        >
+          {status === "loading" ? "Activating..." : "Activate"}
+        </button>
+      </div>
+      {status === "error" && (
+        <p className="license-error-msg">{errorMsg}</p>
+      )}
       <div className="license-gate-footer">
         <a href={CHECKOUT_URL} className="license-buy-link" target="_blank" rel="noopener noreferrer">
           Buy Pro — $9.99 one-time

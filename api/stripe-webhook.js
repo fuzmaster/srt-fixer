@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { markLicenseRefundedByPaymentIntent } from "./_license-store.js";
 
 const HANDLED_EVENTS = new Set([
   "checkout.session.completed",
@@ -74,8 +75,10 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, ignored: true });
   }
 
-  // Stripe is the source of truth for this DB-free MVP. License validation
-  // retrieves Checkout Sessions directly, so webhooks are observed for audit.
+  if (event.type === "charge.refunded") {
+    await markLicenseRefundedByPaymentIntent(event.data?.object?.payment_intent);
+  }
+
   console.info("Stripe webhook received", {
     type: event.type,
     id: event.id,

@@ -68,6 +68,7 @@ export default function SRTFixer() {
   const [fname, setFname] = useState("");
   const [fsize, setFsize] = useState(0);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [drag, setDrag] = useState(false);
   const [copied, setCopied] = useState(false);
   const fRef = useRef(null);
@@ -159,6 +160,9 @@ export default function SRTFixer() {
       .then((lic) => {
         setLicense(lic);
         setError("");
+        if (lic.licenseKey) {
+          setNotice(`Pro activated. Save this license key: ${lic.licenseKey}`);
+        }
       })
       .catch((err) => {
         setError(err.message || "Stripe payment could not be verified.");
@@ -370,7 +374,7 @@ export default function SRTFixer() {
           {mode === "batch" ? (
             isPro
               ? <BatchPanel opts={opts} processingMode={processingMode} license={license} onDeactivate={() => setLicense(null)} />
-              : <LicenseGate />
+              : <LicenseGate onActivated={(lic) => { setLicense(lic); setNotice(""); }} />
           ) : mode === "upload" ? (
             <div role="button" tabIndex={0} aria-label="Upload SRT file — drag and drop or click to browse"
               onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
@@ -428,6 +432,11 @@ export default function SRTFixer() {
           {error && (
             <div role="alert" className="error-alert">
               <span className="error-alert-icon">{I.x}</span>{error}
+            </div>
+          )}
+          {notice && (
+            <div role="status" className="success-alert">
+              {notice}
             </div>
           )}
         </div>

@@ -73,8 +73,10 @@ export async function activateStripeSession(sessionId) {
 
   const stored = {
     provider: "stripe",
-    key: sessionId,
+    key: data.licenseKey,
+    licenseKey: data.licenseKey,
     sessionId,
+    instanceId: data.instance?.id ?? null,
     activatedAt: new Date().toISOString(),
     customerEmail: data.customerEmail ?? null,
   };
