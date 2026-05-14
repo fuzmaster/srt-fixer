@@ -397,8 +397,16 @@ export default function SRTFixer() {
         </div>
       </header>
 
+      <nav className="page-nav app-container" aria-label="Page sections">
+        <a href="#tool">Tool</a>
+        <a href="#workflows">Workflows</a>
+        <a href="#export-guides">Export Guides</a>
+        <a href="#free-vs-pro">Free vs Pro</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
       {/* ═══════ TOOL ═══════ */}
-      <main ref={toolRef} className="app-container tool-main">
+      <main ref={toolRef} id="tool" className="app-container tool-main">
         <div className="fu d3">
           <Label>Tool</Label>
           <div className="tool-label-gap" />
@@ -691,7 +699,7 @@ export default function SRTFixer() {
       </main>
 
       {/* ═══════ WHY EDITORS USE IT ═══════ */}
-      <section className="app-container section-stack">
+      <section className="app-container section-stack" id="workflows">
         <div className="fu d5">
           <Label>Why editors use it</Label>
           <div className="spacer-20" />
@@ -859,7 +867,7 @@ export default function SRTFixer() {
       </section>
 
       {/* ═══════ FAQ ═══════ */}
-      <section className="app-container section-stack">
+      <section className="app-container section-stack" id="faq">
         <div className="fu d7">
           <Label>Frequently Asked</Label>
           <div className="spacer-12" />
