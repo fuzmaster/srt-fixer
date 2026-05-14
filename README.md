@@ -27,7 +27,7 @@ SRT Fixer is a deterministic browser utility for editors who want fast, repeatab
 - Snap subtitle timestamps to project framerates in Pro mode.
 - Apply positive or negative millisecond offsets in Pro mode.
 - Batch process up to 50 `.srt` files and download a ZIP in Pro mode.
-- Validate, activate, and deactivate Pro licenses through a serverless API endpoint.
+- Verify Stripe Checkout payments through a serverless API endpoint.
 
 ## Use SRT Fixer
 
@@ -98,6 +98,24 @@ For timestamp-safe cleanup, use **Clean Text Only**. For redistributed caption b
 SRT Fixer Pro adds batch processing for high-volume subtitle cleanup workflows. It is intended for creators and teams who want consistent caption formatting across an entire project without manually processing files one by one.
 
 For product support, feature requests, or Pro licensing questions, use the contact path provided with your license or product page.
+
+## Stripe Production Setup
+
+SRT Fixer Pro is built around Stripe Checkout and Payment Links.
+
+1. Create a Stripe product for SRT Fixer Pro.
+2. Create a one-time price.
+3. Create a Stripe Payment Link for that price.
+4. Set the Payment Link confirmation behavior to redirect customers back to:
+   `https://srt-fixer-eight.vercel.app/?stripe_session_id={CHECKOUT_SESSION_ID}`
+5. Set `VITE_STRIPE_CHECKOUT_URL` to the Payment Link URL.
+6. Set `STRIPE_SECRET_KEY` in Vercel.
+7. Create a Stripe webhook endpoint at `/api/stripe-webhook`.
+8. Subscribe the webhook to `checkout.session.completed` and `charge.refunded`.
+9. Set `STRIPE_WEBHOOK_SECRET` in Vercel.
+10. Optional but recommended: set `STRIPE_PRO_PRODUCT_ID` and `STRIPE_PRO_PRICE_ID` so the backend only unlocks Pro for this exact product.
+
+The app stores the verified Stripe Checkout Session locally in the browser. For account-based entitlements, license transfers, or an admin dashboard, add durable storage behind the Stripe webhook endpoint.
 
 ## License
 

@@ -7,7 +7,7 @@ import FAQ from "./ui/FAQ";
 import AdvancedPanel from "./ui/AdvancedPanel";
 import LicenseGate from "./ui/LicenseGate";
 import BatchPanel from "./BatchPanel";
-import { getLicense, clearLicense, validateLicense } from "../lib/license";
+import { activateStripeSession, getLicense, clearLicense, validateLicense } from "../lib/license";
 import { sanitizeProcessingOptions } from "../lib/processing";
 
 const SAMPLE_SRT = `1
@@ -147,6 +147,30 @@ export default function SRTFixer() {
         if (!valid) { clearLicense(); setLicense(null); }
       })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("stripe_session_id") || params.get("session_id");
+    if (!sessionId) return;
+
+    setIsProcessing(true);
+    activateStripeSession(sessionId)
+      .then((lic) => {
+        setLicense(lic);
+        setError("");
+      })
+      .catch((err) => {
+        setError(err.message || "Stripe payment could not be verified.");
+      })
+      .finally(() => {
+        setIsProcessing(false);
+        params.delete("stripe_session_id");
+        params.delete("session_id");
+        const nextSearch = params.toString();
+        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", nextUrl);
+      });
   }, []);
 
   const processWithWorker = useCallback((text, options, pMode) => {
@@ -346,7 +370,7 @@ export default function SRTFixer() {
           {mode === "batch" ? (
             isPro
               ? <BatchPanel opts={opts} processingMode={processingMode} license={license} onDeactivate={() => setLicense(null)} />
-              : <LicenseGate onActivated={(lic) => setLicense(lic)} />
+              : <LicenseGate />
           ) : mode === "upload" ? (
             <div role="button" tabIndex={0} aria-label="Upload SRT file — drag and drop or click to browse"
               onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}

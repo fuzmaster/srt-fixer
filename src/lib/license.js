@@ -41,6 +41,8 @@ async function callAPI(action, params) {
 }
 
 export async function activateLicense(key) {
+  if (key?.startsWith("cs_")) return activateStripeSession(key);
+
   const data = await callAPI("activate", {
     license_key: key,
     instance_name: "browser",
@@ -60,7 +62,32 @@ export async function activateLicense(key) {
   return stored;
 }
 
+export async function activateStripeSession(sessionId) {
+  const data = await callAPI("activate_stripe_session", {
+    session_id: sessionId,
+  });
+
+  if (!data.activated) {
+    throw new Error(data.error || "Payment could not be verified.");
+  }
+
+  const stored = {
+    provider: "stripe",
+    key: sessionId,
+    sessionId,
+    activatedAt: new Date().toISOString(),
+    customerEmail: data.customerEmail ?? null,
+  };
+  saveLicense(stored);
+  return stored;
+}
+
 export async function validateLicense(key, instanceId) {
+  if (key?.startsWith("cs_")) {
+    const data = await callAPI("validate_stripe_session", { session_id: key });
+    return data.valid === true;
+  }
+
   const params = { license_key: key };
   if (instanceId) params.instance_id = instanceId;
   const data = await callAPI("validate", params);
@@ -68,6 +95,11 @@ export async function validateLicense(key, instanceId) {
 }
 
 export async function deactivateLicense(key, instanceId) {
+  if (key?.startsWith("cs_")) {
+    clearLicense();
+    return;
+  }
+
   const params = { license_key: key };
   if (instanceId) params.instance_id = instanceId;
   await callAPI("deactivate", params);

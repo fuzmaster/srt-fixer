@@ -1,4 +1,10 @@
-const ALLOWED_ACTIONS = new Set(["activate", "validate", "deactivate"]);
+const ALLOWED_ACTIONS = new Set([
+  "activate",
+  "validate",
+  "deactivate",
+  "activate_stripe_session",
+  "validate_stripe_session",
+]);
 const MAX_KEY_LENGTH = 128;
 const MAX_INSTANCE_FIELD_LENGTH = 128;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
@@ -48,6 +54,71 @@ function appendOptionalParam(params, key, value) {
   return true;
 }
 
+async function stripeRequest(path, params = {}) {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const qs = new URLSearchParams(params);
+  const url = `https://api.stripe.com/v1/${path}${qs.size ? `?${qs}` : ""}`;
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.error?.message || "Stripe request failed");
+  }
+  return data;
+}
+
+async function stripeSessionLineItems(sessionId) {
+  return stripeRequest(`checkout/sessions/${encodeURIComponent(sessionId)}/line_items`, {
+    limit: "10",
+  });
+}
+
+async function verifyStripeSession(sessionId) {
+  if (!sessionId || typeof sessionId !== "string" || !sessionId.startsWith("cs_")) {
+    return { valid: false, error: "Invalid checkout session" };
+  }
+
+  const session = await stripeRequest(`checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    "expand[]": "payment_intent.latest_charge",
+  });
+
+  const charge = session.payment_intent?.latest_charge;
+  const paid = session.payment_status === "paid";
+  const succeeded = !session.payment_intent || session.payment_intent.status === "succeeded";
+  const notRefunded = !charge || charge.refunded !== true;
+
+  if (!paid || !succeeded || !notRefunded) {
+    return { valid: false, error: "Payment is not active" };
+  }
+
+  const expectedPriceId = process.env.STRIPE_PRO_PRICE_ID;
+  const expectedProductId = process.env.STRIPE_PRO_PRODUCT_ID;
+  if (expectedPriceId || expectedProductId) {
+    const items = await stripeSessionLineItems(sessionId);
+    const matched = items.data?.some((item) => {
+      const price = item.price || {};
+      return (
+        (expectedPriceId && price.id === expectedPriceId) ||
+        (expectedProductId && price.product === expectedProductId)
+      );
+    });
+    if (!matched) return { valid: false, error: "Payment is not for SRT Fixer Pro" };
+  }
+
+  return {
+    valid: true,
+    session,
+    customerEmail: session.customer_details?.email || session.customer_email || null,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -63,7 +134,27 @@ export default async function handler(req, res) {
   }
 
   const body = req.body ?? {};
-  const { action, license_key, instance_id, instance_name } = body;
+  const { action, license_key, instance_id, instance_name, session_id } = body;
+
+  if (!ALLOWED_ACTIONS.has(action)) {
+    return res.status(400).json({ error: "Invalid action" });
+  }
+
+  if (action === "activate_stripe_session" || action === "validate_stripe_session") {
+    try {
+      const result = await verifyStripeSession(session_id);
+      if (!result.valid) {
+        return res.status(400).json({ valid: false, activated: false, error: result.error });
+      }
+      return res.status(200).json({
+        valid: true,
+        activated: action === "activate_stripe_session",
+        customerEmail: result.customerEmail,
+      });
+    } catch (err) {
+      return res.status(502).json({ error: err.message || "Stripe verification failed" });
+    }
+  }
 
   if (!license_key || typeof license_key !== "string") {
     return res.status(400).json({ error: "license_key required" });
@@ -71,9 +162,6 @@ export default async function handler(req, res) {
   const trimmedKey = license_key.trim();
   if (!trimmedKey || trimmedKey.length > MAX_KEY_LENGTH) {
     return res.status(400).json({ error: "Invalid license key" });
-  }
-  if (!ALLOWED_ACTIONS.has(action)) {
-    return res.status(400).json({ error: "Invalid action" });
   }
 
   const params = new URLSearchParams({ license_key: trimmedKey });
