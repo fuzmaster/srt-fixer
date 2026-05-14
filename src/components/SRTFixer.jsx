@@ -355,11 +355,11 @@ export default function SRTFixer() {
           </div>
 
           <h1 className="fu d2 hero-title">
-            Clean messy auto-captions<br /><span className="hero-title-accent">before you burn them into reels</span>
+            Clean and fix .SRT subtitle files<br /><span className="hero-title-accent">before you burn them into reels</span>
           </h1>
 
           <p className="fu d3 hero-copy">
-            Remove punctuation, fix casing, clean line breaks, and download a polished .srt file without uploading anything.
+            Remove punctuation, fix casing, clean line breaks, and download a polished .srt file. This formats existing subtitles, it does not transcribe audio or video.
           </p>
 
           <button className="fu d4 btn-primary" onClick={() => toolRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>
@@ -446,7 +446,10 @@ export default function SRTFixer() {
                 <>
                   <div className="dropzone-empty-icon">{I.upload}</div>
                   <p className="dropzone-empty-copy">Drop your <strong className="dropzone-empty-strong">.srt</strong> file here or click to browse</p>
-                  <p className="dropzone-empty-subcopy">Max 10 MB · Processed locally in your browser</p>
+                  <p className="dropzone-empty-subcopy">Accepts .srt only · Formats existing subtitles · No audio/video transcription</p>
+                  <div className="dropzone-trust-badge">
+                    {I.shield} 100% private: files process locally in your browser
+                  </div>
                 </>
               )}
             </div>
@@ -691,6 +694,12 @@ export default function SRTFixer() {
       <section className="app-container section-stack">
         <div className="fu d5">
           <Label>Why editors use it</Label>
+          <div className="spacer-20" />
+          <div className="workflow-strip" aria-label="Supported editing workflows">
+            {["CapCut", "Premiere Pro", "DaVinci Resolve", "Final Cut Pro", "YouTube Shorts", "TikTok"].map((tool) => (
+              <span key={tool} className="workflow-chip">{tool}</span>
+            ))}
+          </div>
           <div className="spacer-20" />
           <div className="features-grid">
             <Card icon={I.zap} title="Strips punctuation fast" desc="Periods, commas, question marks gone in one click. No find-and-replace chains." />

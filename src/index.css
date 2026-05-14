@@ -135,6 +135,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 .dropzone-empty-copy{font-size:14px;color:var(--fg2)}
 .dropzone-empty-strong{color:var(--fg)}
 .dropzone-empty-subcopy{font-size:12px;color:var(--mt);margin-top:6px}
+.dropzone-trust-badge{margin:14px auto 0;width:fit-content;max-width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid var(--ac-b);border-radius:999px;background:var(--ac-d);color:var(--ac);font-family:var(--mono);font-size:11px;font-weight:700}
 
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 .paste-textarea{width:100%;min-height:220px;padding:18px;border-radius:var(--rl);border:1px solid var(--bd);background:var(--sf);color:var(--fg);font-family:var(--mono);font-size:13px;line-height:1.7;resize:vertical;transition:border-color .2s}
@@ -205,6 +206,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 
 .action-bar{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.workflow-strip{display:flex;flex-wrap:wrap;gap:8px}
+.workflow-chip{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--fg2);border:1px solid var(--bd);background:var(--sf);border-radius:999px;padding:8px 12px}
 
 .workflow-section{padding:34px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
 .workflow-head-row{margin-top:18px;margin-bottom:20px;display:grid;grid-template-columns:minmax(260px,.9fr) 1.1fr;gap:20px;align-items:end}
