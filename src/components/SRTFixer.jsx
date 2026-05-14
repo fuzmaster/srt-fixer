@@ -702,6 +702,39 @@ export default function SRTFixer() {
         </div>
       </section>
 
+      {/* ═══════ WORKFLOW SEO ═══════ */}
+      <section className="app-container section-stack">
+        <div className="fu d5 workflow-section">
+          <Label>Caption Cleanup Workflows</Label>
+          <div className="workflow-head-row">
+            <h2 className="workflow-title">Built for the exact SRT mess editors search for</h2>
+            <p className="workflow-copy">
+              Start with an exported subtitle file, clean the text locally, then import the polished .srt back into your editing workflow.
+            </p>
+          </div>
+          <div className="workflow-grid">
+            <div className="workflow-card">
+              <span className="workflow-kicker">CapCut</span>
+              <h3>Clean SRT files for CapCut edits</h3>
+              <p>Remove noisy punctuation and force cleaner one-line captions before burning subtitles into TikTok, Reels, or Shorts exports.</p>
+              <button onClick={loadSample} className="workflow-link-btn">Try CapCut-style cleanup {I.arrow}</button>
+            </div>
+            <div className="workflow-card">
+              <span className="workflow-kicker">Premiere Pro</span>
+              <h3>Fix subtitle line breaks before import</h3>
+              <p>Keep cue timing intact while cleaning awkward auto-caption wrapping, spacing, casing, and punctuation from exported .srt files.</p>
+              <button onClick={loadSample} className="workflow-link-btn">Preview timestamp-safe cleanup {I.arrow}</button>
+            </div>
+            <div className="workflow-card">
+              <span className="workflow-kicker">YouTube Captions</span>
+              <h3>Remove punctuation from auto captions</h3>
+              <p>Turn rough YouTube-style captions into cleaner burn-in subtitles without sending your file to a server or rewriting the words.</p>
+              <button onClick={loadSample} className="workflow-link-btn">Load the before/after demo {I.arrow}</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════ PRO TEASE ═══════ */}
       <section className="app-container section-stack">
         <div className="fu d6 pro-marketing-card">

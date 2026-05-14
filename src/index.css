@@ -206,6 +206,19 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 .action-bar{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 
+.workflow-section{padding:34px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.workflow-head-row{margin-top:18px;margin-bottom:20px;display:grid;grid-template-columns:minmax(260px,.9fr) 1.1fr;gap:20px;align-items:end}
+.workflow-title{font-size:clamp(24px,4vw,38px);line-height:1.12;font-weight:700;color:var(--fg);max-width:520px}
+.workflow-copy{font-size:14px;line-height:1.65;color:var(--fg2);max-width:500px}
+.workflow-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.workflow-card{padding:22px 20px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);display:flex;flex-direction:column;min-height:250px}
+.workflow-card:hover{border-color:var(--bd-h)}
+.workflow-kicker{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--ac);margin-bottom:18px}
+.workflow-card h3{font-size:17px;line-height:1.25;font-weight:700;color:var(--fg);margin-bottom:10px}
+.workflow-card p{font-size:13px;line-height:1.6;color:var(--fg2)}
+.workflow-link-btn{margin-top:auto;padding-top:18px;background:none;border:none;color:var(--ac);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-align:left}
+.workflow-link-btn:hover{color:var(--ac-h)}
+
 .pro-marketing-card{padding:36px 32px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);position:relative;overflow:hidden}
 .pro-marketing-topline{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 0%, var(--ac) 50%, transparent 100%);opacity:.4}
 .pro-marketing-head-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
@@ -236,6 +249,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
   .words-grid{grid-template-columns:1fr}
   .preview-grid{grid-template-columns:1fr !important}
   .features-grid{grid-template-columns:1fr !important}
+  .workflow-head-row{grid-template-columns:1fr}
+  .workflow-grid{grid-template-columns:1fr}
+  .workflow-card{min-height:auto}
   .action-bar{flex-direction:column !important}
   .action-bar button{width:100% !important;justify-content:center !important}
 }
