@@ -202,6 +202,13 @@ export default function SRTFixer() {
     if (size) setFsize(size);
   }, []);
 
+  const openBatchPro = useCallback(() => {
+    setMode("batch");
+    window.setTimeout(() => {
+      toolRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  }, []);
+
   useEffect(() => {
     if (mode !== "paste") {
       setDebouncedRaw(raw);
@@ -634,15 +641,15 @@ export default function SRTFixer() {
           )}
 
           {/* Advanced disclosure */}
-          <AdvancedPanel opts={opts} setOpts={setOpts} processingMode={processingMode} isPro={isPro} onRequirePro={() => setMode("batch")} />
+          <AdvancedPanel opts={opts} setOpts={setOpts} processingMode={processingMode} isPro={isPro} onRequirePro={openBatchPro} />
 
           {/* Pro upsell */}
           {!isPro && (
             <div className="pro-tease-inline">
               <Label><span className="pro-tease-inline-label">{I.lock} SRT Fixer Pro</span></Label>
               <div className="pro-tease-gap" />
-              <div onClick={() => setMode("batch")} role="button" tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setMode("batch"); } }}
+              <div onClick={openBatchPro} role="button" tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openBatchPro(); } }}
                 className="pro-tease-inline-grid">
                 <ProRow label="Batch process up to 50 .srt files at once" lockIcon={I.lock} />
                 <ProRow label="Download all cleaned files as a ZIP" lockIcon={I.lock} />
@@ -860,7 +867,7 @@ export default function SRTFixer() {
                 <li>Snap captions to project framerates</li>
                 <li>Download all cleaned files as a ZIP</li>
               </ul>
-              <button onClick={() => setMode("batch")} className="plan-upgrade-btn">Unlock batch cleanup {I.arrow}</button>
+              <button onClick={openBatchPro} className="plan-upgrade-btn">Unlock batch cleanup {I.arrow}</button>
             </div>
           </div>
         </div>
