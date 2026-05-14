@@ -744,28 +744,116 @@ export default function SRTFixer() {
         </div>
       </section>
 
+      {/* ═══════ EXPORT GUIDES ═══════ */}
+      <section className="app-container section-stack" id="export-guides">
+        <div className="fu d6 guide-layout">
+          <aside className="guide-nav" aria-label="Export guide navigation">
+            <Label>Export SRTs From</Label>
+            <nav className="guide-nav-links">
+              <a href="#export-capcut">CapCut</a>
+              <a href="#export-premiere">Premiere Pro</a>
+              <a href="#export-resolve">DaVinci Resolve</a>
+              <a href="#export-final-cut">Final Cut Pro</a>
+              <a href="#export-youtube">YouTube Studio</a>
+            </nav>
+          </aside>
+
+          <div className="guide-content">
+            <div className="guide-intro">
+              <Label>SRT Export Guide</Label>
+              <h2>Get the caption file first, then clean it here</h2>
+              <p>
+                SRT Fixer does not make captions from audio. Export an existing subtitle file from your editor or platform, clean it here, then bring the polished .srt back into your video workflow.
+              </p>
+            </div>
+
+            <div className="guide-card" id="export-capcut">
+              <h3>Export SRT from CapCut</h3>
+              <ol>
+                <li>Open your project and generate or import captions.</li>
+                <li>Open the captions/subtitles panel.</li>
+                <li>Choose the export captions option and select <strong>SRT</strong> when available.</li>
+                <li>Drop the exported .srt into SRT Fixer, clean it, then re-import the cleaned file.</li>
+              </ol>
+            </div>
+
+            <div className="guide-card" id="export-premiere">
+              <h3>Export SRT from Premiere Pro</h3>
+              <ol>
+                <li>Open the Text panel and review your caption track.</li>
+                <li>Select the caption track in the timeline.</li>
+                <li>Use the captions export option and choose <strong>SubRip Subtitle Format (.srt)</strong>.</li>
+                <li>Clean the exported file in SRT Fixer before importing or burning it into the final edit.</li>
+              </ol>
+            </div>
+
+            <div className="guide-card" id="export-resolve">
+              <h3>Export SRT from DaVinci Resolve</h3>
+              <ol>
+                <li>Create or import subtitles on a subtitle track.</li>
+                <li>Open the subtitle track options or deliver/export settings.</li>
+                <li>Export captions as a separate <strong>.srt</strong> subtitle file.</li>
+                <li>Run the file through SRT Fixer to clean punctuation, casing, and line breaks.</li>
+              </ol>
+            </div>
+
+            <div className="guide-card" id="export-final-cut">
+              <h3>Export SRT from Final Cut Pro</h3>
+              <ol>
+                <li>Add captions to your timeline or import an existing caption file.</li>
+                <li>Use the caption export/share options for the project.</li>
+                <li>Choose an SRT-compatible caption export when available.</li>
+                <li>Clean the .srt here before sending it to a burn-in tool or another editor.</li>
+              </ol>
+            </div>
+
+            <div className="guide-card" id="export-youtube">
+              <h3>Export SRT from YouTube Studio</h3>
+              <ol>
+                <li>Open YouTube Studio and choose your video.</li>
+                <li>Go to Subtitles and open the caption language you want to use.</li>
+                <li>Download the captions as an <strong>.srt</strong> file.</li>
+                <li>Clean the file in SRT Fixer before using it in Shorts, clips, or another edit.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════ PRO TEASE ═══════ */}
       <section className="app-container section-stack">
-        <div className="fu d6 pro-marketing-card">
+        <div className="fu d6 pro-marketing-card" id="free-vs-pro">
           <div className="pro-marketing-topline" />
           <div className="pro-marketing-head-row">
-            <Label>SRT Fixer Pro</Label>
+            <Label>Free vs Pro</Label>
             <span className="pro-marketing-pill">Available Now</span>
           </div>
+          <h2 className="pro-marketing-title">Free is for one-off cleanup. Pro is for getting the edit done faster.</h2>
           <p className="pro-marketing-copy">
-            Batch process up to 50 <code>.srt</code> files at once, snap timing to project framerates, and apply the same cleanup settings across an entire project in seconds.
+            Gen Z and Alpha creators do not want another production chore. They want the Reel finished, posted, and out of their head. Pro turns repetitive caption cleanup into one batch action so editors can stay in the creative flow.
           </p>
-          <div className="pro-marketing-grid">
-            {[
-              "Process up to 50 files in one pass",
-              "Keep settings consistent across files",
-              "Snap captions to 23.976, 24, 25, 29.97, 30, 50, 59.94, or 60 fps",
-              "Download all cleaned files as a ZIP",
-            ].map((f) => (
-              <div key={f} className="pro-marketing-item">
-                <span className="pro-marketing-dot" />{f}
-              </div>
-            ))}
+          <div className="plan-grid">
+            <div className="plan-card">
+              <h3>Free</h3>
+              <p>Best for cleaning one caption file before a post.</p>
+              <ul>
+                <li>Upload or paste one .srt file</li>
+                <li>Remove punctuation and clean spacing</li>
+                <li>Keep original timestamps intact</li>
+                <li>Download one cleaned file</li>
+              </ul>
+            </div>
+            <div className="plan-card is-pro">
+              <h3>Pro</h3>
+              <p>Best for creators and editors handling a full content batch.</p>
+              <ul>
+                <li>Process up to 50 files in one pass</li>
+                <li>Apply the same cleanup settings across every file</li>
+                <li>Snap captions to project framerates</li>
+                <li>Download all cleaned files as a ZIP</li>
+              </ul>
+              <button onClick={() => setMode("batch")} className="plan-upgrade-btn">Unlock batch cleanup {I.arrow}</button>
+            </div>
           </div>
         </div>
       </section>
