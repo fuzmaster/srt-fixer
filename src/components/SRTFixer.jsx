@@ -17,15 +17,23 @@ Hey, what's up? Welcome to another video.
 2
 00:00:02,500 --> 00:00:05,000
 Today we're gonna talk about how to fix
-messy subtitle files super fast.
+messy subtitle files, super fast.
 
 3
 00:00:05,000 --> 00:00:07,500
-It's easier than you think, honestly.
+It's easier than you think, honestly!!!
 
 4
 00:00:07,500 --> 00:00:10,000
-So stick around for the full breakdown.`;
+So stick around for the full breakdown?`;
+
+const SAMPLE_CLEANED_PREVIEW = `1
+00:00:00,000 --> 00:00:02,500
+Hey what's up Welcome to another video
+
+2
+00:00:02,500 --> 00:00:05,000
+Today we're gonna talk about how to fix messy subtitle files super fast`;
 
 const PRESETS = {
   shorts: { label: "YouTube Shorts", opts: { removePeriods: true, removeCommas: true, removeQuestions: false, removeExclamations: false, allCaps: false, singleLine: false, stripSpaces: true, limitWordsPerLine: false, smartRegroup: true, grammarSplit: true, wordsPerLineMin: 4, wordsPerLineMax: 7, maxCharsPerLine: 37, minCueSeconds: 0.8 } },
@@ -237,8 +245,24 @@ export default function SRTFixer() {
   }, [origPrev]);
 
   const loadSample = () => {
+    setMode("upload");
     process(SAMPLE_SRT, "sample.srt", SAMPLE_SRT.length);
+    setProcessingMode("clean");
+    setOpts((o) => ({
+      ...o,
+      removePeriods: true,
+      removeCommas: true,
+      removeQuestions: true,
+      removeExclamations: true,
+      allCaps: false,
+      singleLine: true,
+      smartRegroup: false,
+      platform: "",
+    }));
     setSessionStats((s) => ({ ...s, filesProcessed: s.filesProcessed + 1 }));
+    window.setTimeout(() => {
+      toolRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   const applyPreset = (presetKey) => {
@@ -346,6 +370,29 @@ export default function SRTFixer() {
             <Trust icon={I.terminal} text="No AI rewriting" />
             <Trust icon={I.shield} text="Files stay in your browser" />
             <Trust icon={I.zap} text="No account needed" />
+          </div>
+
+          <div className="fu d6 hero-demo-card" aria-label="Before and after subtitle cleanup example">
+            <div className="hero-demo-copy">
+              <Label>Instant Proof</Label>
+              <h2 className="hero-demo-title">Messy captions in. Burn-in ready SRT out.</h2>
+              <p className="hero-demo-text">
+                See punctuation removed, line breaks cleaned, and original timestamps preserved before you upload your own file.
+              </p>
+              <button className="hero-demo-btn" onClick={loadSample}>
+                {I.zap} Load demo
+              </button>
+            </div>
+            <div className="hero-demo-preview-grid">
+              <div className="hero-demo-preview is-before">
+                <div className="hero-demo-preview-head">Before</div>
+                <pre>{SAMPLE_SRT.split("\n\n").slice(0, 2).join("\n\n")}</pre>
+              </div>
+              <div className="hero-demo-preview is-after">
+                <div className="hero-demo-preview-head">After</div>
+                <pre>{SAMPLE_CLEANED_PREVIEW}</pre>
+              </div>
+            </div>
           </div>
         </div>
       </header>

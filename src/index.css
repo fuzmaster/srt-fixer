@@ -100,6 +100,18 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 .hero-title-accent{color:var(--ac)}
 .hero-copy{font-size:clamp(14px,2vw,16px);line-height:1.6;color:var(--fg2);max-width:520px;margin-bottom:32px}
 .hero-trust-row{display:flex;flex-wrap:wrap;gap:14px 28px;margin-top:32px}
+.hero-demo-card{margin-top:44px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);display:grid;grid-template-columns:minmax(240px,.78fr) 1.22fr;gap:18px;align-items:stretch;max-width:940px}
+.hero-demo-copy{padding:8px 8px 8px 4px;display:flex;flex-direction:column;align-items:flex-start}
+.hero-demo-title{margin-top:14px;font-size:clamp(20px,3vw,28px);line-height:1.15;font-weight:700;color:var(--fg);max-width:340px}
+.hero-demo-text{margin-top:10px;font-size:13px;line-height:1.6;color:var(--fg2);max-width:360px}
+.hero-demo-btn{margin-top:auto;font-family:var(--mono);font-size:12px;font-weight:800;padding:10px 14px;border-radius:var(--r);border:1px solid var(--ac);background:var(--ac);color:#000;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.hero-demo-preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
+.hero-demo-preview{min-width:0;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg-el);overflow:hidden;display:flex;flex-direction:column}
+.hero-demo-preview.is-after{border-color:var(--ac-b);background:linear-gradient(180deg,var(--ac-d),var(--bg-el))}
+.hero-demo-preview-head{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mt);padding:10px 12px;border-bottom:1px solid var(--bd)}
+.hero-demo-preview.is-after .hero-demo-preview-head{color:var(--ac);border-bottom-color:var(--ac-b)}
+.hero-demo-preview pre{margin:0;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--fg2);white-space:pre-wrap;word-break:break-word;max-height:240px;overflow:hidden}
+.hero-demo-preview.is-after pre{color:var(--fg)}
 
 .tool-main{padding-top:48px;scroll-margin-top:24px}
 .tool-label-gap{height:16px}
@@ -211,6 +223,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-s
 .app-footer-copy{font-size:12px;color:var(--mt);font-family:var(--mono)}
 
 @media(max-width:640px){
+  .hero-demo-card{grid-template-columns:1fr;padding:16px;margin-top:36px}
+  .hero-demo-copy{padding:0}
+  .hero-demo-btn{margin-top:18px;width:100%;justify-content:center}
+  .hero-demo-preview-grid{grid-template-columns:1fr}
   .mode-selector{grid-template-columns:1fr}
   .options-panel{padding:18px}
   .options-toggle-header{display:block}
