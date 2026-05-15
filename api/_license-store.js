@@ -127,6 +127,37 @@ export async function createLicenseFromStripeSession({ session, lineItems, licen
   return { licenseKey: key, record };
 }
 
+export async function createManualLicense({ customerEmail, note, licenseKey }) {
+  const key = normalizeLicenseKey(licenseKey || generateLicenseKey());
+  const hash = hashLicenseKey(key);
+  const existing = await getJson(`license:${hash}`);
+  if (existing) return { licenseKey: key, record: existing };
+
+  const record = {
+    provider: "manual",
+    status: "active",
+    sessionId: `manual:${crypto.randomUUID()}`,
+    paymentIntentId: null,
+    chargeId: null,
+    customerEmail: customerEmail || null,
+    customerId: null,
+    note: note || null,
+    lineItems: [
+      {
+        priceId: process.env.STRIPE_PRO_PRICE_ID || null,
+        productId: process.env.STRIPE_PRO_PRODUCT_ID || null,
+        description: "SRT Fixer Pro manual license",
+      },
+    ],
+    activations: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  await setJson(`license:${hash}`, record);
+  return { licenseKey: key, record };
+}
+
 export async function markLicenseEmailSent(licenseKey, emailId = null) {
   const hash = hashLicenseKey(licenseKey);
   const key = `license:${hash}`;
