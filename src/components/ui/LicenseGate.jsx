@@ -9,8 +9,8 @@ const ILock = () => (
 );
 
 const CHECKOUT_URL =
-  import.meta.env.VITE_STRIPE_CHECKOUT_URL ||
   import.meta.env.VITE_LS_CHECKOUT_URL ||
+  import.meta.env.VITE_STRIPE_CHECKOUT_URL ||
   "#";
 
 export default function LicenseGate({ onActivated }) {
@@ -50,7 +50,7 @@ export default function LicenseGate({ onActivated }) {
         <a href={CHECKOUT_URL} className="license-buy-link" target="_blank" rel="noopener noreferrer">
           Buy Pro — $9.99 one-time
         </a>
-        <span className="license-gate-note">Stripe checkout returns here and creates your license key.</span>
+        <span className="license-gate-note">Lemon Squeezy emails your license key after checkout. Paste it below to unlock Pro.</span>
       </div>
 
       <div className="license-activate-panel">
