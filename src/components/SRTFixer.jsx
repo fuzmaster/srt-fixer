@@ -80,6 +80,8 @@ export default function SRTFixer() {
   const [notice, setNotice] = useState("");
   const [drag, setDrag] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: "", email: "", topic: "Question about SRT Fixer", message: "" });
+  const [contactStatus, setContactStatus] = useState({ state: "idle", message: "" });
   const fRef = useRef(null);
   const toolRef = useRef(null);
   const workerRef = useRef(null);
@@ -389,6 +391,29 @@ export default function SRTFixer() {
     setCopied(true); setTimeout(() => setCopied(false), 2200);
   };
 
+  const updateContact = (key, value) => {
+    setContactForm((form) => ({ ...form, [key]: value }));
+    if (contactStatus.state !== "idle") setContactStatus({ state: "idle", message: "" });
+  };
+
+  const submitContact = async (e) => {
+    e.preventDefault();
+    setContactStatus({ state: "loading", message: "Sending..." });
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactForm),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Message could not be sent.");
+      setContactForm({ name: "", email: "", topic: "Question about SRT Fixer", message: "" });
+      setContactStatus({ state: "success", message: "Message sent. I will get back to you soon." });
+    } catch (err) {
+      setContactStatus({ state: "error", message: err.message || "Message could not be sent." });
+    }
+  };
+
   const reset = () => {
     setRaw("");
     setFname("");
@@ -464,6 +489,8 @@ export default function SRTFixer() {
         <a href="#workflows">Workflows</a>
         <a href="#export-guides">Export Guides</a>
         <a href="#free-vs-pro">Free vs Pro</a>
+        <a href="#pro-services">Services</a>
+        <a href="#contact">Contact</a>
         <a href="#faq">FAQ</a>
       </nav>
 
@@ -961,6 +988,78 @@ export default function SRTFixer() {
         </div>
       </section>
 
+      {/* ═══════ SERVICES / BUSINESS ═══════ */}
+      <section className="app-container section-stack" id="pro-services">
+        <div className="fu d6 business-card">
+          <div>
+            <Label>Pro Services</Label>
+            <h2>Need caption cleanup beyond one SRT file?</h2>
+            <p>
+              If SRT Fixer starts saving you real editing time, the next step is workflow support: multi-speaker transcript cleanup, EDL handoff cleanup, batch QA, and custom caption formatting rules for teams.
+            </p>
+          </div>
+          <div className="business-grid">
+            <div className="business-mini-card">
+              <h3>Multi-speaker transcripts</h3>
+              <p>Clean speaker-labeled transcripts and caption files without flattening who said what.</p>
+            </div>
+            <div className="business-mini-card">
+              <h3>EDL support</h3>
+              <p>Convert edit decision list timing into cleaner caption handoff workflows for post-production teams.</p>
+            </div>
+            <div className="business-mini-card">
+              <h3>Agency/team setup</h3>
+              <p>Standardize caption cleanup presets, license handling, and billing for repeat client work.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ CONTACT ═══════ */}
+      <section className="app-container section-stack" id="contact">
+        <div className="fu d6 contact-card">
+          <div className="contact-copy">
+            <Label>Contact</Label>
+            <h2>Questions, custom workflows, or Pro support?</h2>
+            <p>
+              Send a note if something breaks, if you need a business invoice, or if you want multi-person transcript, EDL, or team workflow support.
+            </p>
+          </div>
+          <form className="contact-form" onSubmit={submitContact}>
+            <label>
+              Name
+              <input value={contactForm.name} onChange={(e) => updateContact("name", e.target.value)} autoComplete="name" required />
+            </label>
+            <label>
+              Email
+              <input value={contactForm.email} onChange={(e) => updateContact("email", e.target.value)} type="email" autoComplete="email" required />
+            </label>
+            <label>
+              Topic
+              <select value={contactForm.topic} onChange={(e) => updateContact("topic", e.target.value)}>
+                <option>Question about SRT Fixer</option>
+                <option>Pro license support</option>
+                <option>Multi-speaker transcript support</option>
+                <option>EDL workflow support</option>
+                <option>Business, invoice, or Stripe question</option>
+              </select>
+            </label>
+            <label>
+              Message
+              <textarea value={contactForm.message} onChange={(e) => updateContact("message", e.target.value)} minLength={10} required />
+            </label>
+            <button className="btn-primary" type="submit" disabled={contactStatus.state === "loading"}>
+              {contactStatus.state === "loading" ? "Sending..." : "Send message"} {I.arrow}
+            </button>
+            {contactStatus.message && (
+              <div className={contactStatus.state === "error" ? "contact-status is-error" : "contact-status"}>
+                {contactStatus.message}
+              </div>
+            )}
+          </form>
+        </div>
+      </section>
+
       {/* ═══════ FAQ ═══════ */}
       <section className="app-container section-stack" id="faq">
         <div className="fu d7">
@@ -987,6 +1086,13 @@ export default function SRTFixer() {
           <div className="app-footer-copy">
             Built by Jacob Britten · All processing runs in your browser
           </div>
+          <nav className="app-footer-links" aria-label="Footer links">
+            <a href="https://jacobbritten.com/" target="_blank" rel="noreferrer">Portfolio</a>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=47A4JJ4WNBY9U" target="_blank" rel="noreferrer">Donate</a>
+            <a href="https://github.com/fuzmaster" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://github.com/fuzmaster/srt-fixer" target="_blank" rel="noreferrer">Repo</a>
+            <a href="#contact">Contact</a>
+          </nav>
         </div>
       </footer>
     </div>
