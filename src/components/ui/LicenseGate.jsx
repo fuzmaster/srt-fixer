@@ -8,11 +8,6 @@ const ILock = () => (
   </svg>
 );
 
-const CHECKOUT_URL =
-  import.meta.env.VITE_LS_CHECKOUT_URL ||
-  import.meta.env.VITE_STRIPE_CHECKOUT_URL ||
-  "#";
-
 export default function LicenseGate({ onActivated }) {
   const [key, setKey] = useState("");
   const [status, setStatus] = useState("idle");
@@ -43,14 +38,12 @@ export default function LicenseGate({ onActivated }) {
       </div>
 
       <p className="license-gate-copy">
-        Batch process up to 50 .srt files, download a ZIP, and use timing tools for project framerates.
+        Batch processing, ZIP export, and project framerate timing tools are planned for Pro. The free single-file cleaner is open for public testing now.
       </p>
 
       <div className="license-gate-actions">
-        <a href={CHECKOUT_URL} className="license-buy-link" target="_blank" rel="noopener noreferrer">
-          Buy Pro — $9.99 one-time
-        </a>
-        <span className="license-gate-note">Lemon Squeezy emails your license key after checkout. Paste it below to unlock Pro.</span>
+        <span className="license-coming-soon">Pro coming soon</span>
+        <span className="license-gate-note">Use the free cleaner now. If you already have a test license, you can still activate it below.</span>
       </div>
 
       <div className="license-activate-panel">
