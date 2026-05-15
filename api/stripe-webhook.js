@@ -97,11 +97,19 @@ async function handleCheckoutCompleted(session) {
   if (!lineItemsMatchProduct(lineItems)) return;
 
   const license = await createLicenseFromStripeSession({ session, lineItems });
-  await sendLicenseEmail({
-    to: license.record.customerEmail,
-    licenseKey: license.licenseKey,
-    record: license.record,
-  });
+  try {
+    await sendLicenseEmail({
+      to: license.record.customerEmail,
+      licenseKey: license.licenseKey,
+      record: license.record,
+    });
+  } catch (err) {
+    console.error("License email failed after checkout", {
+      sessionId: session.id,
+      customerEmail: license.record.customerEmail,
+      error: err.message,
+    });
+  }
 }
 
 export default async function handler(req, res) {
