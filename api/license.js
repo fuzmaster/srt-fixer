@@ -76,12 +76,13 @@ function isInternalLicenseKey(key) {
 }
 
 async function gumroadVerifyLicense(licenseKey, incrementUsesCount = true) {
+  const productId = process.env.GUMROAD_PRODUCT_ID;
   const productPermalink = process.env.GUMROAD_PRODUCT_PERMALINK || "srt-fixer-pro";
   const body = new URLSearchParams({
-    product_permalink: productPermalink,
     license_key: licenseKey,
     increment_uses_count: incrementUsesCount ? "true" : "false",
   });
+  body.set(productId ? "product_id" : "product_permalink", productId || productPermalink);
 
   const response = await fetch("https://api.gumroad.com/v2/licenses/verify", {
     method: "POST",
