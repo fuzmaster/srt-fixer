@@ -1,62 +1,61 @@
 # SRT Fixer
 
 [![License](https://img.shields.io/badge/license-proprietary-lightgrey.svg)](#license)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#use-srt-fixer)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#verification)
 [![Version](https://img.shields.io/badge/version-0.0.0-blue.svg)](package.json)
 
-Clean messy `.srt` subtitle files for Reels, Shorts, TikToks, and podcast clips without uploading your captions anywhere. SRT Fixer removes punctuation, fixes casing, cleans line breaks, and downloads polished subtitle files directly from your browser.
+Clean messy `.srt` subtitle files before you burn captions into Reels, Shorts, TikToks, podcast clips, and client edits. SRT Fixer turns awkward auto-caption exports into cleaner, tighter, editor-ready subtitle files directly in the browser.
 
-## The Problem/Solution
+## Why This Exists
 
-Auto-generated captions from editing and recording tools often arrive with awkward punctuation, inconsistent casing, messy line breaks, and subtitle cues that need cleanup before burn-in. Manually fixing those files with find-and-replace is slow, repetitive, and easy to mess up.
+Auto-caption tools are useful, but their exported `.srt` files often need cleanup before publishing: extra punctuation, inconsistent casing, awkward cue text, and line breaks that look clunky once captions are burned into a video.
 
-SRT Fixer is a deterministic browser utility for editors who want fast, repeatable subtitle cleanup. In Clean Text Only mode, it preserves original timestamps, cue count, cue order, and cue breaks while only changing subtitle text. For advanced workflows, Regroup Captions can redistribute words across cues with a clear timing warning.
+SRT Fixer is built for the moment after transcription and before publishing. It does not generate captions from audio or video. It cleans existing `.srt` files so editors can move faster from rough caption export to publish-ready subtitles.
 
 ## Features
 
-- Upload a `.srt` file or paste raw SRT text.
-- Remove periods, commas, question marks, and exclamation marks.
-- Convert captions to ALL CAPS.
+- Upload a `.srt` file or paste raw subtitle text.
+- Remove punctuation from captions.
+- Convert caption text to ALL CAPS.
 - Strip extra whitespace.
-- Force one-line captions while preserving original timestamps in Clean Text Only mode.
+- Force cleaner single-line captions.
+- Preserve timestamps, cue order, and cue breaks in **Clean Text Only** mode.
 - Regroup captions by word count, character count, grammar-aware splits, and minimum cue duration.
 - Preview original and cleaned subtitles side by side.
 - Download a cleaned `.srt` file.
-- Process files locally in the browser with a Web Worker.
-- Validate malformed SRT timestamps and invalid cue ranges.
-- Snap subtitle timestamps to project framerates in Pro mode.
-- Apply positive or negative millisecond offsets in Pro mode.
-- Batch process up to 50 `.srt` files and download a ZIP in Pro mode.
-- Verify Stripe Checkout payments through a serverless API endpoint.
+- Process cleanup locally in the browser using a Web Worker.
+- Batch process up to 50 `.srt` files in Pro.
+- Download Pro batch output as a ZIP.
+- Snap Pro subtitle timestamps to common project framerates.
+- Activate Pro with Gumroad license keys.
+- Includes Remotion scripts for creating vertical promo reels.
 
-## Use SRT Fixer
+## Use The App
 
-SRT Fixer is designed as a hosted browser tool. Open the app, drop in an `.srt` file or paste subtitle text, choose your cleanup settings, preview the result, and download the cleaned file.
+Open the hosted tool:
 
-### Free Cleanup Workflow
+**https://srt-fixer-eight.vercel.app/**
 
-1. Open SRT Fixer in your browser.
-2. Upload a `.srt` file or paste raw subtitle text.
-3. Choose **Clean Text Only** to preserve original timestamps.
-4. Toggle punctuation, casing, spacing, and line-break cleanup options.
-5. Preview the cleaned subtitles.
-6. Download the polished `.srt` file.
+Free workflow:
 
-### Pro Batch Workflow
+1. Upload a `.srt` file or paste subtitle text.
+2. Choose **Clean Text Only** for timestamp-safe cleanup.
+3. Toggle punctuation, casing, spacing, and line-break options.
+4. Preview the result.
+5. Download the cleaned `.srt` file.
 
-SRT Fixer Pro is built for editors, agencies, and content teams cleaning many subtitle files at once.
+Pro workflow:
 
-1. Activate a Pro license.
-2. Add up to 50 `.srt` files.
-3. Choose a cleanup preset across the full batch.
-4. Optionally snap cue timing to `23.976`, `24`, `25`, `29.97`, `30`, `50`, `59.94`, or `60` fps.
-5. Apply a subtitle offset in milliseconds when a timeline needs nudging.
-6. Process everything locally in the browser.
-7. Download all cleaned files as a ZIP.
+1. Buy SRT Fixer Pro on Gumroad.
+2. Copy the license key from the Gumroad receipt.
+3. Open **BatchPro** in SRT Fixer.
+4. Paste the license key and activate Pro.
+5. Batch process up to 50 `.srt` files.
+6. Download the cleaned files as a ZIP.
 
-## Usage Example
+## Example
 
-Paste or upload an SRT file:
+Input:
 
 ```srt
 1
@@ -68,7 +67,7 @@ Hello, world. Welcome to the video!
 This is a messy auto-caption.
 ```
 
-Enable cleanup options such as **Strip Punctuation**, **ALL CAPS**, or **Force single line**, then download the cleaned subtitle file:
+Cleaned output:
 
 ```srt
 1
@@ -80,7 +79,17 @@ HELLO WORLD WELCOME TO THE VIDEO
 THIS IS A MESSY AUTO-CAPTION
 ```
 
-For timestamp-safe cleanup, use **Clean Text Only**. For redistributed caption blocks, use **Regroup Captions**.
+## Supported Workflows
+
+SRT Fixer is designed for caption files exported from tools such as:
+
+- CapCut
+- Premiere Pro
+- DaVinci Resolve
+- Final Cut Pro
+- YouTube Studio
+- Podcast clipping workflows
+- Short-form video production pipelines
 
 ## Tech Stack
 
@@ -91,38 +100,62 @@ For timestamp-safe cleanup, use **Clean Text Only**. For redistributed caption b
 - Vitest
 - JSZip
 - Vercel serverless functions
-- Stripe Checkout and webhook integration
-- Redis-backed Pro license storage
-- Resend transactional license emails
+- Gumroad license verification
+- Remotion for vertical promo reels
+- Vercel Analytics
 
-## Support & Pro
+## Configuration
 
-SRT Fixer Pro adds batch processing for high-volume subtitle cleanup workflows. It is intended for creators and teams who want consistent caption formatting across an entire project without manually processing files one by one.
+SRT Fixer Pro currently uses Gumroad for checkout and license verification.
 
-For product support, feature requests, or Pro licensing questions, use the contact path provided with your license or product page.
+Key production variables:
 
-## Stripe Production Setup
+```env
+VITE_GUMROAD_CHECKOUT_URL=https://jbritten.gumroad.com/l/srt-fixer-pro
+GUMROAD_PRODUCT_ID=replace-with-your-gumroad-product-id
+GUMROAD_PRODUCT_PERMALINK=srt-fixer-pro
+```
 
-SRT Fixer Pro is built around Stripe Checkout and Payment Links.
+Optional legacy/fallback integrations remain available in the codebase for Stripe, Lemon Squeezy, Redis-backed internal licenses, and Resend email delivery.
 
-1. Create a Stripe product for SRT Fixer Pro.
-2. Create a one-time price.
-3. Create a Stripe Payment Link for that price.
-4. Set the Payment Link confirmation behavior to redirect customers back to:
-   `https://srt-fixer-eight.vercel.app/?stripe_session_id={CHECKOUT_SESSION_ID}`
-5. Set `VITE_STRIPE_CHECKOUT_URL` to the Payment Link URL.
-6. Set `STRIPE_SECRET_KEY` in Vercel.
-7. Create a Stripe webhook endpoint at `/api/stripe-webhook`.
-8. Subscribe the webhook to `checkout.session.completed` and `charge.refunded`.
-9. Set `STRIPE_WEBHOOK_SECRET` in Vercel.
-10. Optional but recommended: set `STRIPE_PRO_PRODUCT_ID` and `STRIPE_PRO_PRICE_ID` so the backend only unlocks Pro for this exact product.
-11. Create a Vercel Redis, Vercel KV, or Upstash Redis database. Set either `REDIS_URL` or the REST pair `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
-12. Set `LICENSE_HASH_SECRET` to a long random string.
-13. Create a Resend API key and set `RESEND_API_KEY`.
-14. Set `LICENSE_EMAIL_FROM` to a verified sender, such as `SRT Fixer <licenses@yourdomain.com>`.
-15. Optional: set `LICENSE_EMAIL_REPLY_TO` for support replies.
+## Local Development
 
-After checkout, the backend generates an `SRT-...` license key, stores a hashed license record, emails the key to the Stripe customer email through Resend, and returns the key to the customer in the browser. Customers can reuse that key on another browser or device. Refund webhooks mark matching licenses inactive.
+This repository is primarily built for the hosted app, but the local development workflow is standard Vite:
+
+```bash
+npm install
+npm run dev
+```
+
+Useful commands:
+
+```bash
+npm test
+npm run build
+npm run remotion:preview
+npm run remotion:render
+```
+
+## Verification
+
+Current checks:
+
+- `npm test`
+- `npm run build`
+
+The subtitle parser/cleaner test suite currently covers timestamp parsing, cue validation, text cleanup, regrouping behavior, and edge cases around malformed SRT content.
+
+## Roadmap
+
+- More export guides for editing apps.
+- More Pro batch presets.
+- Better multi-speaker transcript cleanup.
+- EDL/transcript workflow support.
+- More Remotion ad templates for social launch testing.
+
+## Support
+
+For questions, feature requests, or licensing help, use the contact form on the SRT Fixer website or reach out through the Gumroad purchase page.
 
 ## License
 
