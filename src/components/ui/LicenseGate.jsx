@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { activateLicense } from "../../lib/license";
 
+const CHECKOUT_URL =
+  import.meta.env.VITE_GUMROAD_CHECKOUT_URL ||
+  import.meta.env.VITE_LS_CHECKOUT_URL ||
+  import.meta.env.VITE_STRIPE_CHECKOUT_URL ||
+  "https://jbritten.gumroad.com/l/srt-fixer-pro";
+
 const ILock = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -38,12 +44,14 @@ export default function LicenseGate({ onActivated }) {
       </div>
 
       <p className="license-gate-copy">
-        Batch processing, ZIP export, and project framerate timing tools are planned for Pro. The free single-file cleaner is open for public testing now.
+        Batch process subtitle files, export project ZIPs, and keep caption cleanup settings consistent across client work. Buy once on Gumroad, then paste your license key here to unlock Pro in this browser.
       </p>
 
       <div className="license-gate-actions">
-        <span className="license-coming-soon">Pro coming soon</span>
-        <span className="license-gate-note">Use the free cleaner now. If you already have a test license, you can still activate it below.</span>
+        <a className="license-buy-link" href={CHECKOUT_URL} target="_blank" rel="noopener noreferrer">
+          Buy Pro on Gumroad - $9.99
+        </a>
+        <span className="license-gate-note">Gumroad emails your license key after checkout. Return here, paste it below, and click Activate.</span>
       </div>
 
       <div className="license-activate-panel">
@@ -53,7 +61,7 @@ export default function LicenseGate({ onActivated }) {
             id="pro-license-key"
             type="text"
             className={`license-input ${status === "error" ? "is-error" : ""}`}
-            placeholder="SRT-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+            placeholder="XXXX-XXXX-XXXX-XXXX"
             value={key}
             onChange={(e) => { setKey(e.target.value); if (status === "error") setStatus("idle"); }}
             onKeyDown={(e) => { if (e.key === "Enter") handleActivate(); }}

@@ -956,7 +956,7 @@ export default function SRTFixer() {
           <div className="pro-marketing-topline" />
           <div className="pro-marketing-head-row">
             <Label>Free vs Pro</Label>
-            <span className="pro-marketing-pill">Coming Soon</span>
+            <span className="pro-marketing-pill">Available on Gumroad</span>
           </div>
           <h2 className="pro-marketing-title">Free is for one-off cleanup. Pro is for getting the edit done faster.</h2>
           <p className="pro-marketing-copy">
@@ -982,7 +982,7 @@ export default function SRTFixer() {
                 <li>Snap captions to project framerates</li>
                 <li>Download all cleaned files as a ZIP</li>
               </ul>
-              <button onClick={openBatchPro} className="plan-upgrade-btn">Preview Pro tools {I.arrow}</button>
+              <button onClick={openBatchPro} className="plan-upgrade-btn">Unlock batch cleanup {I.arrow}</button>
             </div>
           </div>
         </div>

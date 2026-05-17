@@ -75,6 +75,69 @@ function isInternalLicenseKey(key) {
   return String(key || "").trim().toUpperCase().startsWith("SRT-");
 }
 
+async function gumroadVerifyLicense(licenseKey, incrementUsesCount = true) {
+  const productPermalink = process.env.GUMROAD_PRODUCT_PERMALINK || "srt-fixer-pro";
+  const body = new URLSearchParams({
+    product_permalink: productPermalink,
+    license_key: licenseKey,
+    increment_uses_count: incrementUsesCount ? "true" : "false",
+  });
+
+  const response = await fetch("https://api.gumroad.com/v2/licenses/verify", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Gumroad license request failed");
+  }
+
+  return data;
+}
+
+function gumroadPurchaseAllowed(purchase = {}) {
+  if (purchase.refunded || purchase.chargebacked) return false;
+  if (purchase.disputed) return false;
+  return true;
+}
+
+async function activateGumroadLicense(licenseKey) {
+  const result = await gumroadVerifyLicense(licenseKey, true);
+  if (!result.success || !gumroadPurchaseAllowed(result.purchase)) {
+    return { activated: false, error: "License key is not active for SRT Fixer Pro." };
+  }
+
+  return {
+    activated: true,
+    instance: {
+      id: `gumroad:${result.purchase?.id || result.purchase?.email || "browser"}`,
+      name: "browser",
+    },
+    meta: {
+      provider: "gumroad",
+      customer_email: result.purchase?.email || null,
+      product_name: result.purchase?.product_name || "SRT Fixer Pro",
+    },
+  };
+}
+
+async function validateGumroadLicense(licenseKey) {
+  const result = await gumroadVerifyLicense(licenseKey, false);
+  return {
+    valid: result.success === true && gumroadPurchaseAllowed(result.purchase),
+    error: result.success ? null : result.message || "License key is not active.",
+  };
+}
+
+async function deactivateGumroadLicense() {
+  return { deactivated: true };
+}
+
 async function lemonLicenseRequest(action, params) {
   const endpointByAction = {
     activate: "activate",
@@ -104,6 +167,10 @@ async function lemonLicenseRequest(action, params) {
     throw new Error(data?.error || data?.message || "Lemon Squeezy license request failed");
   }
   return data;
+}
+
+function useGumroadLicensing() {
+  return Boolean(process.env.GUMROAD_PRODUCT_PERMALINK);
 }
 
 function lemonProductAllowed(meta = {}) {
@@ -265,18 +332,24 @@ export default async function handler(req, res) {
     if (action === "activate") {
       const result = isInternalLicenseKey(license_key)
         ? await activateStoredLicense(license_key, instance_name)
+        : useGumroadLicensing()
+          ? await activateGumroadLicense(license_key)
         : await activateLemonLicense(license_key, instance_name);
       return res.status(result.activated ? 200 : 400).json(result);
     }
     if (action === "validate") {
       const result = isInternalLicenseKey(license_key)
         ? await validateStoredLicense(license_key, instance_id)
+        : useGumroadLicensing()
+          ? await validateGumroadLicense(license_key)
         : await validateLemonLicense(license_key, instance_id);
       return res.status(200).json(result);
     }
     if (action === "deactivate") {
       const result = isInternalLicenseKey(license_key)
         ? await deactivateStoredLicense(license_key, instance_id)
+        : useGumroadLicensing()
+          ? await deactivateGumroadLicense()
         : await deactivateLemonLicense(license_key, instance_id);
       return res.status(200).json(result);
     }
