@@ -166,6 +166,7 @@ export default function BatchPanel({ opts, processingMode, license, onDeactivate
   const doneCount = files.filter((f) => f.status === "done").length;
   const pendingCount = files.filter((f) => f.status === "pending" || f.status === "error").length;
   const errorCount = files.filter((f) => f.status === "error").length;
+  const progressPct = files.length ? Math.round((doneCount / files.length) * 100) : 0;
 
   return (
     <div className="batch-panel">
@@ -186,6 +187,22 @@ export default function BatchPanel({ opts, processingMode, license, onDeactivate
           </button>
         </div>
       </div>
+
+      {files.length > 0 && (
+        <div className="batch-progress-card" aria-live="polite">
+          <div className="batch-progress-meta">
+            <span>{doneCount} cleaned</span>
+            <span>{pendingCount} waiting</span>
+            {errorCount > 0 && <span className="batch-progress-error">{errorCount} need attention</span>}
+          </div>
+          <div className="batch-progress-track" aria-label={`Batch progress ${progressPct}%`}>
+            <span className="batch-progress-fill" style={{ width: `${progressPct}%` }} />
+          </div>
+          <p className="batch-progress-copy">
+            Current cleanup settings apply to every file in this batch. Download one file or grab the finished set as a ZIP.
+          </p>
+        </div>
+      )}
 
       {/* Drop zone */}
       {files.length < MAX_FILES && (

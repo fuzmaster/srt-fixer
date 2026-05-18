@@ -43,9 +43,194 @@ const PRESETS = {
   clean:   { label: "Clean",           opts: { removePeriods: true, removeCommas: true, removeQuestions: false, removeExclamations: false, allCaps: false, singleLine: true,  stripSpaces: true, limitWordsPerLine: false, smartRegroup: false, grammarSplit: false, wordsPerLineMin: 4, wordsPerLineMax: 8, maxCharsPerLine: 42, minCueSeconds: 0.8 } },
 };
 
+const SAMPLE_LIBRARY = [
+  {
+    id: "capcut",
+    label: "CapCut messy export",
+    desc: "Punctuation-heavy short-form captions with awkward wraps.",
+    name: "capcut-sample.srt",
+    text: SAMPLE_SRT,
+    preset: {
+      mode: "clean",
+      opts: {
+        removePeriods: true,
+        removeCommas: true,
+        removeQuestions: true,
+        removeExclamations: true,
+        allCaps: false,
+        singleLine: true,
+        smartRegroup: false,
+        platform: "",
+      },
+    },
+  },
+  {
+    id: "podcast",
+    label: "Podcast clip cleanup",
+    desc: "Longer conversational captions for clean clip repurposing.",
+    name: "podcast-clip-sample.srt",
+    text: `1
+00:00:00,000 --> 00:00:03,200
+So, the thing that most people miss is that captions are part of the edit.
+
+2
+00:00:03,200 --> 00:00:06,700
+If they're messy, too long, or full of commas, the whole clip feels slower.
+
+3
+00:00:06,700 --> 00:00:09,400
+That's why I clean them before I burn anything into the final video.`,
+    preset: {
+      mode: "regroup",
+      opts: { ...PRESETS.podcast.opts, platform: "podcast" },
+    },
+  },
+  {
+    id: "social",
+    label: "Punchy social captions",
+    desc: "All-caps creator captions for Reels, Shorts, and TikToks.",
+    name: "social-captions-sample.srt",
+    text: `1
+00:00:00,000 --> 00:00:01,400
+Here's the fastest way to clean subtitles.
+
+2
+00:00:01,400 --> 00:00:03,000
+Upload the SRT file, remove the junk punctuation,
+
+3
+00:00:03,000 --> 00:00:04,800
+and download a cleaner version for your edit.`,
+    preset: {
+      mode: "regroup",
+      opts: { ...PRESETS.tiktok.opts, platform: "tiktok" },
+    },
+  },
+];
+
 const MAX_TEXT_CHARS = 10 * 1024 * 1024;
+const HEALTH_LINE_CHAR_LIMIT = 42;
+const HEALTH_LINE_WORD_LIMIT = 12;
 
 // Parsing and transformation run in src/workers/srt-worker.js via src/lib/srt-engine.js
+
+function getRawSrtChunks(rawText) {
+  if (!rawText?.trim()) return [];
+  return rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split(/\n\n+/).filter((chunk) => chunk.trim());
+}
+
+function analyzeSrtHealth(rawText, blocks = []) {
+  const chunks = getRawSrtChunks(rawText);
+  const issues = [];
+  const warnings = [];
+  const duplicateIndexes = new Set();
+  const seenIndexes = new Set();
+  const invalidBlocks = Math.max(0, chunks.length - blocks.length);
+  let overlapCount = 0;
+  let longLineCount = 0;
+  let longWordLineCount = 0;
+  let emptyCueCount = 0;
+  let outOfOrderCount = 0;
+
+  chunks.forEach((chunk) => {
+    const firstLine = chunk.split("\n").find((line) => line.trim());
+    const index = firstLine?.trim();
+    if (/^\d+$/.test(index || "")) {
+      if (seenIndexes.has(index)) duplicateIndexes.add(index);
+      seenIndexes.add(index);
+    }
+  });
+
+  blocks.forEach((block, index) => {
+    if (index > 0) {
+      const previous = blocks[index - 1];
+      if (Number.isFinite(block.start) && Number.isFinite(previous?.end) && block.start < previous.end) {
+        overlapCount += 1;
+      }
+      if (Number.isFinite(block.start) && Number.isFinite(previous?.start) && block.start < previous.start) {
+        outOfOrderCount += 1;
+      }
+    }
+
+    if (!block.text?.some((line) => line.trim())) emptyCueCount += 1;
+
+    block.text?.forEach((line) => {
+      if (line.length > HEALTH_LINE_CHAR_LIMIT) longLineCount += 1;
+      if (line.trim().split(/\s+/).filter(Boolean).length > HEALTH_LINE_WORD_LIMIT) longWordLineCount += 1;
+    });
+  });
+
+  if (invalidBlocks > 0) issues.push(`${invalidBlocks} block${invalidBlocks !== 1 ? "s" : ""} skipped because the timestamp or cue format looked invalid.`);
+  if (overlapCount > 0) issues.push(`${overlapCount} cue${overlapCount !== 1 ? "s" : ""} overlap with the previous timestamp.`);
+  if (outOfOrderCount > 0) issues.push(`${outOfOrderCount} cue${outOfOrderCount !== 1 ? "s" : ""} appear out of timestamp order.`);
+  if (emptyCueCount > 0) issues.push(`${emptyCueCount} cue${emptyCueCount !== 1 ? "s" : ""} have no caption text.`);
+  if (duplicateIndexes.size > 0) warnings.push(`${duplicateIndexes.size} duplicate cue index${duplicateIndexes.size !== 1 ? "es" : ""} found. SRT Fixer will renumber output.`);
+  if (longLineCount > 0) warnings.push(`${longLineCount} line${longLineCount !== 1 ? "s" : ""} exceed ${HEALTH_LINE_CHAR_LIMIT} characters.`);
+  if (longWordLineCount > 0) warnings.push(`${longWordLineCount} line${longWordLineCount !== 1 ? "s" : ""} exceed ${HEALTH_LINE_WORD_LIMIT} words.`);
+
+  const score = Math.max(0, 100 - invalidBlocks * 20 - overlapCount * 15 - outOfOrderCount * 15 - emptyCueCount * 15 - duplicateIndexes.size * 5 - longLineCount * 2 - longWordLineCount * 2);
+  const status = issues.length > 0 ? "Needs review" : warnings.length > 0 ? "Looks usable" : "Clean structure";
+
+  return {
+    status,
+    score,
+    totalBlocks: chunks.length,
+    validCues: blocks.length,
+    invalidBlocks,
+    overlapCount,
+    longLineCount,
+    longWordLineCount,
+    duplicateIndexCount: duplicateIndexes.size,
+    issues,
+    warnings,
+  };
+}
+
+function buildCleanupReport({ fileName, mode, health, stats, plainText, output }) {
+  const name = fileName || "pasted-captions.srt";
+  const lines = [
+    "SRT Fixer Cleanup Report",
+    "========================",
+    "",
+    `File: ${name}`,
+    `Mode: ${mode === "regroup" ? "Regroup Captions" : "Clean Text Only"}`,
+    `Generated: ${new Date().toLocaleString()}`,
+    "",
+    "Health Check",
+    "------------",
+    `Status: ${health.status}`,
+    `Score: ${health.score}/100`,
+    `Valid cues: ${health.validCues}`,
+    `Raw blocks found: ${health.totalBlocks}`,
+    `Invalid/skipped blocks: ${health.invalidBlocks}`,
+    `Overlapping cues: ${health.overlapCount}`,
+    `Long lines: ${health.longLineCount}`,
+    `Long word-heavy lines: ${health.longWordLineCount}`,
+    `Duplicate indexes: ${health.duplicateIndexCount}`,
+    "",
+    "Cleanup Stats",
+    "-------------",
+    `Words: ${stats.wordsBefore} -> ${stats.wordsAfter}`,
+    `Punctuation removed: ${stats.punctRemoved}`,
+    `Average words per line: ${stats.avgWordsPerLine}`,
+    `Cleaned SRT characters: ${output.length}`,
+    `Plain text lines: ${plainText ? plainText.split("\n").filter(Boolean).length : 0}`,
+    "",
+    "Issues",
+    "------",
+    ...(health.issues.length ? health.issues.map((issue) => `- ${issue}`) : ["- No blocking SRT structure issues detected."]),
+    "",
+    "Warnings",
+    "--------",
+    ...(health.warnings.length ? health.warnings.map((warning) => `- ${warning}`) : ["- No readability warnings detected."]),
+    "",
+    "Note",
+    "----",
+    "Clean Text Only preserves original timestamps. Regroup Captions may rebuild cue timing.",
+    "",
+  ];
+  return lines.join("\n");
+}
 
 // ═══════════════════════════════════════════════════════════════
 // ICONS
@@ -307,21 +492,37 @@ export default function SRTFixer() {
     return blocks.slice(0, PREVIEW_MAX_BLOCKS).join("\n\n") + `\n\n[…${blocks.length - PREVIEW_MAX_BLOCKS} more]`;
   }, [origPrev]);
 
-  const loadSample = () => {
+  const cleanedPlainText = useMemo(() => {
+    if (!output) return "";
+    return output
+      .split(/\n\n+/)
+      .map((block) => {
+        const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+        const textLines = lines.filter((line, index) => index > 1 && !/^\d+$/.test(line) && !line.includes("-->"));
+        return textLines.join(" ");
+      })
+      .filter(Boolean)
+      .join("\n");
+  }, [output]);
+
+  const healthReport = useMemo(() => analyzeSrtHealth(raw, parsed || []), [raw, parsed]);
+  const cleanupReport = useMemo(() => {
+    if (!has) return "";
+    return buildCleanupReport({
+      fileName: fname,
+      mode: processingMode,
+      health: healthReport,
+      stats,
+      plainText: cleanedPlainText,
+      output,
+    });
+  }, [cleanedPlainText, fname, has, healthReport, output, processingMode, stats]);
+
+  const loadSample = (sample = SAMPLE_LIBRARY[0]) => {
     setMode("upload");
-    process(SAMPLE_SRT, "sample.srt", SAMPLE_SRT.length);
-    setProcessingMode("clean");
-    setOpts((o) => ({
-      ...o,
-      removePeriods: true,
-      removeCommas: true,
-      removeQuestions: true,
-      removeExclamations: true,
-      allCaps: false,
-      singleLine: true,
-      smartRegroup: false,
-      platform: "",
-    }));
+    process(sample.text, sample.name, sample.text.length);
+    setProcessingMode(sample.preset.mode);
+    setOpts((o) => ({ ...o, ...sample.preset.opts }));
     setSessionStats((s) => ({ ...s, filesProcessed: s.filesProcessed + 1 }));
     window.setTimeout(() => {
       toolRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -367,13 +568,47 @@ export default function SRTFixer() {
   const onDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setDrag(true); };
   const onDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setDrag(false); };
 
+  const downloadBlob = (content, filename, type = "text/plain;charset=utf-8") => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
   const download = () => {
     if (!output) return;
     const base = fname ? fname.replace(/\.srt$/i, "") : "cleaned-subtitles";
-    const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
+    downloadBlob(output, `${base}.cleaned.srt`);
+  };
+
+  const downloadTxt = () => {
+    if (!cleanedPlainText) return;
+    const base = fname ? fname.replace(/\.srt$/i, "") : "cleaned-subtitles";
+    downloadBlob(`${cleanedPlainText}\n`, `${base}.cleaned.txt`);
+  };
+
+  const downloadReport = () => {
+    if (!cleanupReport) return;
+    const base = fname ? fname.replace(/\.srt$/i, "") : "cleaned-subtitles";
+    downloadBlob(cleanupReport, `${base}.cleanup-report.txt`);
+  };
+
+  const downloadSingleZip = async () => {
+    if (!output) return;
+    const base = fname ? fname.replace(/\.srt$/i, "") : "cleaned-subtitles";
+    const { default: JSZip } = await import("jszip");
+    const zip = new JSZip();
+    zip.file(`${base}.cleaned.srt`, output);
+    if (cleanedPlainText) zip.file(`${base}.cleaned.txt`, `${cleanedPlainText}\n`);
+    if (cleanupReport) zip.file(`${base}.cleanup-report.txt`, cleanupReport);
+    zip.file("README.txt", "This ZIP was created by SRT Fixer. The .srt file keeps subtitle timing; the .txt file contains cleaned caption text only.\n");
+    const blob = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `${base}.cleaned.srt`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${base}.cleaned.zip`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const copy = async () => {
@@ -427,8 +662,6 @@ export default function SRTFixer() {
     if (fRef.current) fRef.current.value = "";
   };
 
-  const outName = fname ? fname.replace(/\.srt$/i, ".cleaned.srt") : "cleaned-subtitles.srt";
-
   return (
     <div className="app-root">
       {/* ═══════ HERO ═══════ */}
@@ -465,7 +698,7 @@ export default function SRTFixer() {
               <p className="hero-demo-text">
                 See punctuation removed, line breaks cleaned, and original timestamps preserved before you upload your own file.
               </p>
-              <button className="hero-demo-btn" onClick={loadSample}>
+              <button className="hero-demo-btn" onClick={() => loadSample()}>
                 {I.zap} Load demo
               </button>
             </div>
@@ -608,6 +841,21 @@ export default function SRTFixer() {
             </div>
           )}
 
+          <div className="sample-gallery" aria-label="Sample subtitle files">
+            <div className="sample-gallery-head">
+              <Label>Sample Gallery</Label>
+              <span>Load a realistic messy SRT without hunting for a file.</span>
+            </div>
+            <div className="sample-gallery-grid">
+              {SAMPLE_LIBRARY.map((sample) => (
+                <button key={sample.id} className="sample-card" onClick={() => loadSample(sample)}>
+                  <span className="sample-card-title">{sample.label}</span>
+                  <span className="sample-card-desc">{sample.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Error */}
           {error && (
             <div role="alert" className="error-alert">
@@ -700,7 +948,7 @@ export default function SRTFixer() {
               )}
             </div>
 
-            <button onClick={loadSample} className="sample-btn">
+            <button onClick={() => loadSample()} className="sample-btn">
               {I.zap} Try sample
             </button>
           </div>
@@ -782,6 +1030,33 @@ export default function SRTFixer() {
           </div>
         )}
 
+        {has && (
+          <div className="health-panel">
+            <div className="health-score-card">
+              <span className={`health-score-ring ${healthReport.issues.length ? "is-warning" : "is-good"}`}>
+                {healthReport.score}
+              </span>
+              <div>
+                <Label>SRT Health Check</Label>
+                <h3>{healthReport.status}</h3>
+                <p>{healthReport.validCues} valid cues from {healthReport.totalBlocks} raw block{healthReport.totalBlocks !== 1 ? "s" : ""}.</p>
+              </div>
+            </div>
+            <div className="health-metric-grid">
+              <div><span>{healthReport.invalidBlocks}</span>Invalid blocks</div>
+              <div><span>{healthReport.overlapCount}</span>Overlaps</div>
+              <div><span>{healthReport.longLineCount}</span>Long lines</div>
+              <div><span>{healthReport.duplicateIndexCount}</span>Duplicate indexes</div>
+            </div>
+            {(healthReport.issues.length > 0 || healthReport.warnings.length > 0) && (
+              <div className="health-notes">
+                {healthReport.issues.map((issue) => <p key={issue} className="health-note is-issue">{I.x} {issue}</p>)}
+                {healthReport.warnings.map((warning) => <p key={warning} className="health-note">{I.zap} {warning}</p>)}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Preview */}
         {has && (
           <div className="preview-section">
@@ -805,13 +1080,42 @@ export default function SRTFixer() {
                 </div>
               ))}
             </div>
+            <div className="txt-converter-card">
+              <div>
+                <Label>SRT to TXT Converter</Label>
+                <h3>Need plain captions without timestamps?</h3>
+                <p>Export the cleaned dialogue as a readable text file for scripts, captions review, client notes, or repurposing into social copy.</p>
+              </div>
+              <button className="btn-secondary" onClick={downloadTxt}>{I.download} Download cleaned .TXT</button>
+            </div>
+            <div className="manual-editor">
+              <div className="manual-editor-head">
+                <div>
+                  <Label>Manual final pass</Label>
+                  <p>Make last-second wording tweaks here before downloading. Timing stays in the SRT text unless you edit it.</p>
+                </div>
+                <span className="manual-editor-chip">{output.length.toLocaleString()} chars</span>
+              </div>
+              <textarea
+                value={output}
+                onChange={(e) => setOutput(e.target.value)}
+                spellCheck={false}
+                className="manual-editor-textarea"
+                aria-label="Editable cleaned SRT output"
+              />
+            </div>
           </div>
         )}
 
         {/* Actions */}
         {has && (
           <div className="action-bar">
-            <button className="btn-primary" onClick={download}>{I.download} Download {outName}</button>
+            <div className="download-variant-group" aria-label="Download variants">
+              <button className="btn-primary" onClick={download}>{I.download} Download .SRT</button>
+              <button className="btn-secondary" onClick={downloadTxt}>{I.download} Download .TXT</button>
+              <button className="btn-secondary" onClick={downloadSingleZip}>{I.download} ZIP both</button>
+              <button className="btn-secondary" onClick={downloadReport}>{I.download} Report</button>
+            </div>
             <button className={`btn-secondary ${copied ? "is-copied" : ""}`} onClick={copy} aria-label={copied ? "Copied" : "Copy output"}>
               {copied ? I.check : I.copy}{copied ? "Copied" : "Copy"}
             </button>
@@ -856,19 +1160,19 @@ export default function SRTFixer() {
               <span className="workflow-kicker">CapCut</span>
               <h3>Clean SRT files for CapCut edits</h3>
               <p>Remove noisy punctuation and force cleaner one-line captions before burning subtitles into TikTok, Reels, or Shorts exports.</p>
-              <button onClick={loadSample} className="workflow-link-btn">Try CapCut-style cleanup {I.arrow}</button>
+              <button onClick={() => loadSample()} className="workflow-link-btn">Try CapCut-style cleanup {I.arrow}</button>
             </div>
             <div className="workflow-card">
               <span className="workflow-kicker">Premiere Pro</span>
               <h3>Fix subtitle line breaks before import</h3>
               <p>Keep cue timing intact while cleaning awkward auto-caption wrapping, spacing, casing, and punctuation from exported .srt files.</p>
-              <button onClick={loadSample} className="workflow-link-btn">Preview timestamp-safe cleanup {I.arrow}</button>
+              <button onClick={() => loadSample()} className="workflow-link-btn">Preview timestamp-safe cleanup {I.arrow}</button>
             </div>
             <div className="workflow-card">
               <span className="workflow-kicker">YouTube Captions</span>
               <h3>Remove punctuation from auto captions</h3>
               <p>Turn rough YouTube-style captions into cleaner burn-in subtitles without sending your file to a server or rewriting the words.</p>
-              <button onClick={loadSample} className="workflow-link-btn">Load the before/after demo {I.arrow}</button>
+              <button onClick={() => loadSample()} className="workflow-link-btn">Load the before/after demo {I.arrow}</button>
             </div>
           </div>
         </div>
